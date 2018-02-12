@@ -19,6 +19,7 @@ public class TransformInfo {
     public List<ProxyInfo> proxyInfo = new ArrayList<>();
     public List<TryCatchInfo> tryCatchInfo = new ArrayList<>();
     public Set<String> hookClasses = new HashSet<>();
+    public boolean enableCheckMethodNotFound;
 
     public TransformInfo(List<String> hookClasses) {
         this.hookClasses.addAll(hookClasses);

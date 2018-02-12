@@ -5,6 +5,7 @@ import com.android.build.api.transform.Format;
 import com.android.build.api.transform.JarInput;
 import com.android.build.api.transform.QualifiedContent;
 import com.android.build.api.transform.TransformInvocation;
+import com.android.build.api.transform.TransformOutputProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -103,7 +104,8 @@ public class TransformContext {
     }
 
     public void clear() throws IOException {
-        invocation.getOutputProvider().deleteAll();
+        TransformOutputProvider outputProvider = invocation.getOutputProvider();
+        if (outputProvider != null) outputProvider.deleteAll();
     }
 
     public GlobalContext getGlobal() {

@@ -1,0 +1,19 @@
+[
+  "com/google(/.+)",
+  "junit(/.+)",
+  "me/ele(/.+)",
+  "javassist(/.+)",
+  "sun(/.+)",
+  "com/appsee/Appsee",
+  "com/alipay(/.+)",
+  "retrofit2/http/QueryName",
+  "org/greenrobot/greendao(/.+)",
+  "com/alibaba(/.+)",
+  "com/taobao(/.+)",
+  "com/squareup/okhttp(/.+)",
+  "okhttp3(/.+)",
+  "org/android/agoo(/.+)",
+  "com/ut/mini(/.+)",
+  "org/mozilla(/.+)"
+  //  "com/tencent(/.+)"
+]

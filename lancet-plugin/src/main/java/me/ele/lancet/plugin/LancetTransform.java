@@ -29,21 +29,29 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import me.ele.lancet.plugin.internal.ExtraCache;
 import me.ele.lancet.plugin.internal.GlobalContext;
 import me.ele.lancet.plugin.internal.LocalCache;
-import me.ele.lancet.plugin.internal.preprocess.PreClassAnalysis;
 import me.ele.lancet.plugin.internal.TransformContext;
 import me.ele.lancet.plugin.internal.TransformProcessor;
 import me.ele.lancet.plugin.internal.context.ContextReader;
+import me.ele.lancet.plugin.internal.preprocess.PreClassAnalysis;
 import me.ele.lancet.weaver.MetaParser;
 import me.ele.lancet.weaver.Weaver;
 import me.ele.lancet.weaver.internal.AsmWeaver;
+import me.ele.lancet.weaver.internal.asm.classvisitor.CheckMethodInvokeClassVisitor;
+import me.ele.lancet.weaver.internal.asm.classvisitor.CheckMethodInvokeClassVisitor.MethodCallLocation;
 import me.ele.lancet.weaver.internal.entity.InsertInfo;
 import me.ele.lancet.weaver.internal.entity.ProxyInfo;
 import me.ele.lancet.weaver.internal.entity.TransformInfo;
+import me.ele.lancet.weaver.internal.graph.Graph;
+import me.ele.lancet.weaver.internal.graph.MethodEntity;
+import me.ele.lancet.weaver.internal.graph.Node;
 import me.ele.lancet.weaver.internal.log.Impl.FileLoggerImpl;
 import me.ele.lancet.weaver.internal.log.Log;
 import me.ele.lancet.weaver.internal.parser.AsmMetaParser;
+
+import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckMethodInvokeClassVisitor.SEPARATOR;
 
 class LancetTransform extends Transform {
 
@@ -58,6 +66,17 @@ class LancetTransform extends Transform {
         this.global = new GlobalContext(project);
         // load the LocalCache from disk
         this.cache = new LocalCache(global.getLancetDir());
+
+        List<String> taskNames = project.getGradle().getStartParameter().getTaskNames();
+        for (int index = 0; index < taskNames.size(); ++index) {
+            String taskName = taskNames.get(index);
+            if (taskName.contains("assemble") || taskName.contains("resguard")) {
+                if (taskName.toLowerCase().endsWith("debug") &&
+                        taskName.toLowerCase().contains("debug")) {
+                    Util.isDebugging = true;
+                }
+            }
+        }
     }
 
     @Override
@@ -102,6 +121,7 @@ class LancetTransform extends Transform {
 
     @Override
     public void transform(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException {
+        Util.setEnableCheckMethodNotFound(lancetExtension.isCheckMethodNotFoundEnable());
         initLog();
 
         Log.i("start time: " + System.currentTimeMillis());
@@ -113,9 +133,7 @@ class LancetTransform extends Transform {
         Log.i("now: " + System.currentTimeMillis());
 
         boolean incremental = lancetExtension.getIncremental();
-
-        PreClassAnalysis preClassAnalysis = new PreClassAnalysis(cache);
-
+        PreClassAnalysis preClassAnalysis = new PreClassAnalysis(cache, new ExtraCache(global.getLancetExtraDir()));
         incremental = preClassAnalysis.execute(incremental, context);
 
         Log.i("after pre analysis, incremental: " + incremental);
@@ -131,6 +149,7 @@ class LancetTransform extends Transform {
 
         context.getGraph().flow().clear();
         TransformInfo transformInfo = parser.parse(context.getHookClasses(), context.getGraph());
+        transformInfo.enableCheckMethodNotFound = Util.enableCheckMethodNotFound();
 
         Weaver weaver = AsmWeaver.newInstance(transformInfo, context.getGraph());
         Map<String, List<InsertInfo>> executeInfoBak = new HashMap<>();
@@ -163,6 +182,26 @@ class LancetTransform extends Transform {
                 });
             }
         }
+        if (Util.enableCheckMethodNotFound() && !preClassAnalysis.getExtraCache().classMetas.isEmpty()) {
+            Map<String, MethodCallLocation> methodCache = CheckMethodInvokeClassVisitor.getMethodCache();
+            Map<String, MethodCallLocation> pendingMethods = methodCache.entrySet().stream()
+                    .filter(entry -> !entry.getValue().exist)
+                    .filter(entry -> {
+                        String[] split = entry.getKey().split(SEPARATOR);
+                        String className = split[0];
+                        return !checkIfSuperMethodExisted(context.getGraph(), className, split[1], split[2], entry.getValue())
+                                && CheckMethodInvokeClassVisitor.shouldCheck(className);
+                    })
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            if (!pendingMethods.isEmpty()) {
+                pendingMethods.forEach((k, v) -> {
+                    String[] split = k.split(SEPARATOR);
+                    String className = split[0];
+                    errorLog.add(String.format("Class: %s, Method: %s, Desc: %s not found. It was called at Class: %s, Method: %s \n",
+                            className, split[1], split[2], v.clzLoc, v.methodLoc));
+                });
+            }
+        }
 
         handleErrorLog();
 
@@ -175,9 +214,35 @@ class LancetTransform extends Transform {
     }
 
     private void handleErrorLog() {
+        File log = new File(global.getLancetExtraDir(), "error_log.txt");
+        try {
+            Writer writer = Files.newWriter(log, Charsets.UTF_8);
+            writer.write(errorLog.toString());
+            writer.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         if (!errorLog.isEmpty() && lancetExtension.isStrictMode()) {
             throw new RuntimeException(errorLog.toString());
         }
+    }
+
+    private boolean checkIfSuperMethodExisted(Graph graph, String className, String methodName, String desc, MethodCallLocation value) {
+        Node node = graph.get(className);
+        if (node == null) {
+            errorLog.add(String.format("Class: %s not found, with Method: %s. It was called at Class: %s, Method: %s \n",
+                    className, methodName, value.clzLoc, value.methodLoc));
+            return false;
+        }
+        Node parent = node.parent;
+        while (parent != null) {
+            for (MethodEntity m : parent.entity.methods) {
+                if (methodName.equals(m.name) && desc.equals(m.desc))
+                    return true;
+            }
+            parent = parent.parent;
+        }
+        return false;
     }
 
     private AsmMetaParser createParser(TransformContext context) {

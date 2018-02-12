@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 import me.ele.lancet.plugin.Util;
+import me.ele.lancet.plugin.internal.ExtraCache;
 import me.ele.lancet.plugin.internal.LocalCache;
 import me.ele.lancet.plugin.internal.TransformContext;
 import me.ele.lancet.plugin.internal.context.ClassFetcher;
@@ -30,6 +31,7 @@ import me.ele.lancet.weaver.internal.log.Log;
 public class PreClassAnalysis {
 
     private LocalCache cache;
+    private ExtraCache extraCache;
     private MetaGraphGeneratorImpl graph;
     private PreClassProcessor classProcessor = new AsmClassProcessorImpl();
 
@@ -39,8 +41,9 @@ public class PreClassAnalysis {
 
     private volatile boolean partial = true;
 
-    public PreClassAnalysis(LocalCache cache) {
+    public PreClassAnalysis(LocalCache cache, ExtraCache extraCache) {
         this.cache = cache;
+        this.extraCache = extraCache;
         this.graph = new MetaGraphGeneratorImpl(cache.hookFlow());
     }
 
@@ -91,6 +94,8 @@ public class PreClassAnalysis {
 
     private PreAnalysisClassFetcher fullyParse(TransformContext context) throws IOException, InterruptedException {
         PreAnalysisClassFetcher preAnalysisClassFetcher = new PreAnalysisClassFetcher();
+        if (Util.enableCheckMethodNotFound())
+            extraCache.accept(graph);
         contextReader.accept(false, preAnalysisClassFetcher);
         return preAnalysisClassFetcher;
     }
@@ -156,5 +161,9 @@ public class PreClassAnalysis {
         @Override
         public void onComplete(QualifiedContent content) {
         }
+    }
+
+    public ExtraCache getExtraCache() {
+        return extraCache;
     }
 }

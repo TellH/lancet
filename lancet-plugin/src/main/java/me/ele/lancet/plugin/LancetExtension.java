@@ -12,6 +12,7 @@ public class LancetExtension {
     private String fileName = null;
     private boolean incremental = true;
     private boolean checkUselessProxyMethodEnable = false;
+    private boolean checkMethodNotFoundEnable = true;
     private boolean strictMode;
 
     public void logLevel(Log.Level level) {
@@ -79,6 +80,14 @@ public class LancetExtension {
 
     public void setCheckUselessProxyMethodEnable(boolean enable) {
         checkUselessProxyMethodEnable = enable;
+    }
+
+    public boolean isCheckMethodNotFoundEnable() {
+        return checkMethodNotFoundEnable;
+    }
+
+    public void setCheckMethodNotFoundEnable(boolean checkMethodNotFoundEnable) {
+        this.checkMethodNotFoundEnable = checkMethodNotFoundEnable;
     }
 
     public void setStrictMode(boolean strictMode) {
