@@ -50,8 +50,7 @@ android {
 
 lancet {
     checkUselessProxyMethodEnable true
-    checkMethodNotFoundEnable true
-    strictMode false
+    strictMode true
 }
 
 dependencies {
@@ -60,6 +59,4 @@ dependencies {
     compile 'com.android.support:appcompat-v7:26.1.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile project(':lancet-base')
-    compile 'com.example:Blib:0.1'
-    compile 'com.example:Clib:0.1'
 }

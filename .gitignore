@@ -21,5 +21,3 @@ local.properties
 lancet-weaver/src/test/sample/class/
 lancet-weaver/src/test/sample/product/
 gradle_plugins/*
-lancet_extra/error_log.txt
-*.iml
