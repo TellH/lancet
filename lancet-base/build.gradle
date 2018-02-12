@@ -1,8 +1,31 @@
+group 'me.ele'
+version '0.3'
 apply plugin: 'java'
-
+apply plugin: 'maven'
+apply plugin: 'bintray-release'
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
 }
 
 sourceCompatibility = "1.7"
 targetCompatibility = "1.7"
+publish {
+    userOrg = 'tellh'//bintray.com用户名
+    groupId = 'com.tellh.me.ele'//jcenter上的路径
+    artifactId = 'lancet-base'//项目名称
+    publishVersion = '1.0.1'//版本号
+    desc = 'Add proxy check to lancet '
+    website = 'https://github.com/tellh/lancet'
+}
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            //设置插件的GAV参数
+            pom.groupId = 'me.ele'
+            pom.artifactId = 'lancet-base'
+            pom.version = 0.3
+            //文件发布到下面目录
+            repository(url: uri('../gradle_plugins'))
+        }
+    }
+}

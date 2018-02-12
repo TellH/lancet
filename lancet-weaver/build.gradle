@@ -1,5 +1,8 @@
+group 'me.ele'
+version '0.3'
 apply plugin: 'java'
-
+apply plugin: 'maven'
+apply plugin: 'bintray-release'
 dependencies {
     testCompile "junit:junit:4.12"
     testCompile 'com.squareup.okio:okio:1.11.0'
@@ -7,6 +10,7 @@ dependencies {
 
     compileClasspath "com.android.tools.build:gradle:$android_tools_version"
     compile project(':lancet-base')
+//    compile 'me.ele:lancet-base:0.3'
     compile gradleApi()
     compileClasspath "com.google.guava:guava:$guava_version"
     compile "org.ow2.asm:asm-all:$asm_version"
@@ -15,4 +19,23 @@ dependencies {
 sourceCompatibility = "1.8"
 targetCompatibility = "1.8"
 
-
+publish {
+    userOrg = 'tellh'//bintray.com用户名
+    groupId = 'com.tellh.me.ele'//jcenter上的路径
+    artifactId = 'lancet-weaver'//项目名称
+    publishVersion = '1.0.1'//版本号
+    desc = 'Add proxy check to lancet '
+    website = 'https://github.com/eleme/lancet'
+}
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            //设置插件的GAV参数
+            pom.groupId = 'me.ele'
+            pom.artifactId = 'lancet-weaver'
+            pom.version = 0.3
+            //文件发布到下面目录
+            repository(url: uri('../gradle_plugins'))
+        }
+    }
+}
