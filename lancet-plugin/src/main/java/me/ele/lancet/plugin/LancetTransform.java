@@ -10,15 +10,21 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
 
+import org.apache.commons.io.Charsets;
 import org.gradle.api.Project;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -32,6 +38,8 @@ import me.ele.lancet.plugin.internal.context.ContextReader;
 import me.ele.lancet.weaver.MetaParser;
 import me.ele.lancet.weaver.Weaver;
 import me.ele.lancet.weaver.internal.AsmWeaver;
+import me.ele.lancet.weaver.internal.entity.InsertInfo;
+import me.ele.lancet.weaver.internal.entity.ProxyInfo;
 import me.ele.lancet.weaver.internal.entity.TransformInfo;
 import me.ele.lancet.weaver.internal.log.Impl.FileLoggerImpl;
 import me.ele.lancet.weaver.internal.log.Log;
@@ -42,6 +50,7 @@ class LancetTransform extends Transform {
     private final LancetExtension lancetExtension;
     private final GlobalContext global;
     private LocalCache cache;
+    private ArrayList<String> errorLog = new ArrayList<>();
 
 
     public LancetTransform(Project project, LancetExtension lancetExtension) {
@@ -124,13 +133,51 @@ class LancetTransform extends Transform {
         TransformInfo transformInfo = parser.parse(context.getHookClasses(), context.getGraph());
 
         Weaver weaver = AsmWeaver.newInstance(transformInfo, context.getGraph());
+        Map<String, List<InsertInfo>> executeInfoBak = new HashMap<>();
+        if (lancetExtension.isCheckUselessProxyMethodEnable()) {
+            // backup @Insert executeInfo
+            for (String k : transformInfo.executeInfo.keySet()) {
+                List<InsertInfo> infosBak = new ArrayList<>();
+                List<InsertInfo> insertInfos = transformInfo.executeInfo.get(k);
+                infosBak.addAll(insertInfos);
+                executeInfoBak.put(k, infosBak);
+            }
+        }
         new ContextReader(context).accept(incremental, new TransformProcessor(context, weaver));
+        if (lancetExtension.isCheckUselessProxyMethodEnable()) {
+            List<ProxyInfo> proxyInfoList = transformInfo.proxyInfo;
+            proxyInfoList.forEach(info -> {
+                if (!info.isTargetMethodExist) {
+                    errorLog.add(String.format("@Proxy: %s target method is not exist!", info.toString()));
+                }
+                if (!info.isEffective) {
+                    errorLog.add(String.format("@Proxy: %s is useless!", info.toString()));
+                }
+            });
+            for (String k : executeInfoBak.keySet()) {
+                List<InsertInfo> insertInfos = executeInfoBak.get(k);
+                insertInfos.forEach(info -> {
+                    if (!info.shouldIgoreCheck && !info.isTargetMethodExist) {
+                        errorLog.add(String.format("@Insert: %s target method is not exist!", info.toString()));
+                    }
+                });
+            }
+        }
+
+        handleErrorLog();
+
         Log.i("build successfully done");
         Log.i("now: " + System.currentTimeMillis());
 
         cache.saveToLocal();
         Log.i("cache saved");
         Log.i("now: " + System.currentTimeMillis());
+    }
+
+    private void handleErrorLog() {
+        if (!errorLog.isEmpty() && lancetExtension.isStrictMode()) {
+            throw new RuntimeException(errorLog.toString());
+        }
     }
 
     private AsmMetaParser createParser(TransformContext context) {

@@ -11,6 +11,8 @@ public class LancetExtension {
     private Log.Level level = Log.Level.INFO;
     private String fileName = null;
     private boolean incremental = true;
+    private boolean checkUselessProxyMethodEnable = false;
+    private boolean strictMode;
 
     public void logLevel(Log.Level level) {
         this.level = Objects.requireNonNull(level, "Log.Level is null");
@@ -69,5 +71,21 @@ public class LancetExtension {
 
     public String getFileName() {
         return fileName;
+    }
+
+    public boolean isCheckUselessProxyMethodEnable() {
+        return checkUselessProxyMethodEnable;
+    }
+
+    public void setCheckUselessProxyMethodEnable(boolean enable) {
+        checkUselessProxyMethodEnable = enable;
+    }
+
+    public void setStrictMode(boolean strictMode) {
+        this.strictMode = strictMode;
+    }
+
+    public boolean isStrictMode() {
+        return strictMode;
     }
 }
