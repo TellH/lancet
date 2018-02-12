@@ -4,6 +4,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.example.blib.B;
+import com.example.clib.C;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,6 +28,8 @@ public class MainActivity extends AppCompatActivity {
         list.add("haha");
         list.get(0);
 
+        new C().c();
+        new B().b();
     }
 
     @Override
