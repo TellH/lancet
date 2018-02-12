@@ -39,6 +39,10 @@ public class ProxyClassVisitor extends LinkedClassVisitor {
         if (matches.size() > 0) {
             mv = new ProxyMethodVisitor(getContext().getChain(), mv, maps, matches, getContext().name, name, getClassCollector());
         }
+        List<ProxyInfo> proxyInfos = matches.get(getContext().name + " " + name + " " + desc);
+        if (proxyInfos != null && proxyInfos.size() > 0) {
+            proxyInfos.forEach(proxyInfo -> proxyInfo.isTargetMethodExist = true);
+        }
         return mv;
     }
 }
