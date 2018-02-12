@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,7 +59,7 @@ class LancetTransform extends Transform {
     private final LancetExtension lancetExtension;
     private final GlobalContext global;
     private LocalCache cache;
-    private ArrayList<String> errorLog = new ArrayList<>();
+    private Set<String> errorLog = new HashSet<>();
 
 
     public LancetTransform(Project project, LancetExtension lancetExtension) {
