@@ -21,9 +21,9 @@ targetCompatibility = "1.8"
 
 publish {
     userOrg = 'tellh'//bintray.com用户名
-    groupId = 'com.tellh.me.ele'//jcenter上的路径
+    groupId = "$upload_group"//jcenter上的路径
     artifactId = 'lancet-weaver'//项目名称
-    publishVersion = '1.0.1'//版本号
+    publishVersion = "$upload_version"//版本号
     desc = 'Add proxy check to lancet '
     website = 'https://github.com/eleme/lancet'
 }
