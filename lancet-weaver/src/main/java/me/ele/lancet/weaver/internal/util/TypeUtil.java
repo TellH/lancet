@@ -72,4 +72,8 @@ public class TypeUtil {
     public static int resetAccessScope(int access,int scope){
         return access & ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED) | scope;
     }
+
+    public static boolean isInterface(int access) {
+        return (access & Opcodes.ACC_INTERFACE) == Opcodes.ACC_INTERFACE;
+    }
 }
