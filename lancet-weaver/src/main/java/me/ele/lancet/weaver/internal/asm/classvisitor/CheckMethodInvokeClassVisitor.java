@@ -9,11 +9,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
-import me.ele.lancet.base.Scope;
 import me.ele.lancet.weaver.internal.asm.LinkedClassVisitor;
-import me.ele.lancet.weaver.internal.graph.ClassEntity;
+import me.ele.lancet.weaver.internal.asm.classvisitor.methodvisitor.CheckNotFoundMethodVisitor;
 import me.ele.lancet.weaver.internal.graph.Graph;
-import me.ele.lancet.weaver.internal.graph.MethodEntity;
 import me.ele.lancet.weaver.internal.graph.Node;
 import me.ele.lancet.weaver.internal.util.TypeUtil;
 
@@ -61,7 +59,6 @@ public class CheckMethodInvokeClassVisitor extends LinkedClassVisitor {
         this.className = name;
         this.isInterface = TypeUtil.isInterface(access);
         this.shouldCheck = shouldCheck(className);
-        super.visit(version, access, name, signature, superName, interfaces);
         if (this.shouldCheck) {
             Node classNode = graph.get(className);
             if (classNode != null) {
@@ -74,6 +71,7 @@ public class CheckMethodInvokeClassVisitor extends LinkedClassVisitor {
                 });
             }
         }
+        super.visit(version, access, name, signature, superName, interfaces);
     }
 
     public static boolean shouldCheck(String className) {
@@ -90,67 +88,10 @@ public class CheckMethodInvokeClassVisitor extends LinkedClassVisitor {
     @Override
     public MethodVisitor visitMethod(int access, String methodName, String desc, String signature, String[] exceptions) {
         MethodVisitor mv = super.visitMethod(access, methodName, desc, signature, exceptions);
-        if (!shouldCheck) return mv;
-        return new MethodVisitor(Opcodes.ASM5, mv) {
-            @Override
-            public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-                if (shouldCheck(owner)) {
-                    if (itf) { // 接口调用，把所有都实现类的调用方法都放入Cache里
-                        graph.implementsOf(owner, Scope.ALL).forEach(node -> {
-                            ClassEntity clz = node.entity;
-                            if (!TypeUtil.isInterface(clz.access) && !TypeUtil.isAbstract(clz.access)) {
-                                addMethodToCache(clz.name, name, desc);
-                            }
-                        });
-                    } else if (isAbstract(owner, name, desc)) {
-                        graph.childrenOf(owner, Scope.ALL).forEach(node -> {
-                            ClassEntity clz = node.entity;
-                            if (!TypeUtil.isInterface(clz.access) && !TypeUtil.isAbstract(clz.access)) {
-                                addMethodToCache(clz.name, name, desc);
-                            }
-                        });
-                    } else {
-                        addMethodToCache(owner, name, desc);
-                    }
-                }
-                super.visitMethodInsn(opcode, owner, name, desc, itf);
-            }
-
-            private boolean isAbstract(String clazz, String method, String desc) {
-                Node node = graph.get(clazz);
-                if (node == null) return false;
-                ClassEntity entity = node.entity;
-                if (!TypeUtil.isAbstract(entity.access)) {
-                    return false;
-                }
-                for (MethodEntity m : entity.methods) {
-                    if (method.equals(m.name) && desc.equals(m.desc))
-                        return TypeUtil.isAbstract(m.access);
-                }
-                // 往上从父类中找方法
-                Node parent = node.parent;
-                while (parent != null) {
-                    for (MethodEntity m : parent.entity.methods) {
-                        if (methodName.equals(m.name) && desc.equals(m.desc)) {
-                            // 找到这个方法
-                            return TypeUtil.isAbstract(m.access);
-                        }
-                    }
-                    parent = parent.parent;
-                }
-                return TypeUtil.isAbstract(entity.access); // 有可能是抽象类里的接口方法
-            }
-
-            private void addMethodToCache(String ownerClz, String name, String desc) {
-                String methodKey = String.join(SEPARATOR, ownerClz, name, desc);
-                if (!methodCache.containsKey(methodKey)) {
-                    MethodCallLocation callLocation = new MethodCallLocation(false);
-                    callLocation.clzLoc = className;
-                    callLocation.methodLoc = methodName;
-                    methodCache.put(methodKey, callLocation);
-                }
-            }
-        };
+        if (shouldCheck) {
+            mv = new CheckNotFoundMethodVisitor(Opcodes.ASM5, mv, graph, methodName, className);
+        }
+        return mv;
     }
 
     public static Map<String, MethodCallLocation> getMethodCache() {
