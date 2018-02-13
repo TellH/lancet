@@ -30,46 +30,47 @@ public class ClassTransform {
 
         classCollector.setOriginClassName(internalName);
 
-        checkIfInsertMethodExist(transformInfo, classByte, internalName);
+        beforeClassTransform(transformInfo, graph, classByte, internalName);
         MethodChain chain = new MethodChain(internalName, classCollector.getOriginClassVisitor(), graph);
         ClassContext context = new ClassContext(graph, chain, classCollector.getOriginClassVisitor());
 
         ClassTransform transform = new ClassTransform(classCollector, context);
-        if (transformInfo.enableCheckMethodNotFound) {
-            transform.connect(new CheckMethodInvokeClassVisitor(graph));
-        }
         transform.connect(new HookClassVisitor(transformInfo.hookClasses));
         transform.connect(new ProxyClassVisitor(transformInfo.proxyInfo));
         transform.connect(new InsertClassVisitor(transformInfo.executeInfo));
         transform.connect(new TryCatchInfoClassVisitor(transformInfo.tryCatchInfo));
-        try {
-            transform.startTransform();
-        } catch (Exception e) {
-            System.out.println("Reading Class: " + internalName);
-            throw e;
-        }
+        transform.startTransform();
         return classCollector.generateClassBytes();
     }
 
-    private static void checkIfInsertMethodExist(TransformInfo transformInfo, byte[] classByte, String internalName) {
-        List<InsertInfo> matchInsertMethods = transformInfo.executeInfo.get(internalName);
-        if (matchInsertMethods == null || matchInsertMethods.isEmpty())
-            return;
+    // 这个方法做了两件事 do two things:
+    // 1. 检查@Insert的target class内有没有所要注入的方法。Check @Insert target class if the target inject method exists.
+    // 2. 遍历这个类的所有方法和方法内的方法调用指令。Visit this Class's all methods and all method invoking instrument.
+    private static void beforeClassTransform(TransformInfo transformInfo, Graph graph, byte[] classByte, String internalName) {
         ClassReader cr = new ClassReader(classByte);
         ClassNode cn = new ClassNode();
+        // checkIfInsertMethodExist
         cr.accept(cn, ClassReader.SKIP_CODE);
         List<MethodNode> methods = cn.methods;
-        methods.forEach(m -> matchInsertMethods.forEach(e -> {
-            if (e.targetMethod.equals(m.name) && e.targetDesc.equals(m.desc)) {
-                if (((e.sourceMethod.access ^ m.access) & Opcodes.ACC_STATIC) != 0) {
-                    throw new IllegalStateException(e.sourceClass + "." + e.sourceMethod.name + " should have the same static flag with "
-                            + internalName + "." + m.name);
+        List<InsertInfo> matchInsertMethods = transformInfo.executeInfo.get(internalName);
+        if (matchInsertMethods != null && !matchInsertMethods.isEmpty()) {
+            methods.forEach(m -> matchInsertMethods.forEach(e -> {
+                if (e.targetMethod.equals(m.name) && e.targetDesc.equals(m.desc)) {
+                    if (((e.sourceMethod.access ^ m.access) & Opcodes.ACC_STATIC) != 0) {
+                        throw new IllegalStateException(e.sourceClass + "." + e.sourceMethod.name + " should have the same static flag with "
+                                + internalName + "." + m.name);
+                    }
+                    if ((m.access & (Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT)) == 0) {
+                        e.isTargetMethodExist = true;
+                    }
                 }
-                if ((m.access & (Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT)) == 0) {
-                    e.isTargetMethodExist = true;
-                }
-            }
-        }));
+            }));
+        }
+
+        // check if Classes and Methods not found
+        if (transformInfo.enableCheckMethodNotFound) {
+            cr.accept(new CheckMethodInvokeClassVisitor(graph), ClassReader.SKIP_DEBUG);
+        }
     }
 
     private LinkedClassVisitor mHeadVisitor;
