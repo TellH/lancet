@@ -1,3 +1,4 @@
+## 支持引用不存在的类和方法的检查
 ### 配置
 - 在build.gradle添加闭包:
 ```
@@ -8,10 +9,10 @@ lancet {
 ```
 ```
     dependencies {
-        provided 'com.tellh.me.ele:lancet-base:1.0.2-alpha2'
+        provided 'com.tellh.me.ele:lancet-base:1.0.2-alpha3'
     }
     dependencies {
-        classpath 'com.tellh.me.ele:lancet-plugin:1.0.2-alpha2'
+        classpath 'com.tellh.me.ele:lancet-plugin:1.0.2-alpha3'
     }
 ```
 - 在主工程中创建目录 lancet_extra，在目录内存放android_sdk.json和white_list.json。android_sdk.json内容是sdk中的所有类的信息，用于插件检查时构建一个完整的Graph。
