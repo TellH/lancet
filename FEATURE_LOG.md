@@ -10,10 +10,10 @@ lancet {
 ```
 ```
     dependencies {
-        provided 'com.tellh.me.ele:lancet-base:1.0.3'
+        provided 'com.tellh.me.ele:lancet-base:1.0.5'
     }
     dependencies {
-        classpath 'com.tellh.me.ele:lancet-plugin:1.0.3'
+        classpath 'com.tellh.me.ele:lancet-plugin:1.0.5'
     }
 ```
 - 在主工程中创建目录 lancet_extra，在目录内存放android_sdk.json和white_list.json。android_sdk.json内容是sdk中的所有类的信息，用于插件检查时构建一个完整的Graph。
