@@ -7,6 +7,7 @@ import me.ele.lancet.weaver.internal.graph.ClassEntity;
 import me.ele.lancet.weaver.internal.graph.Graph;
 import me.ele.lancet.weaver.internal.graph.MethodEntity;
 import me.ele.lancet.weaver.internal.graph.Node;
+import me.ele.lancet.weaver.internal.log.Log;
 import me.ele.lancet.weaver.internal.util.TypeUtil;
 
 import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckMethodInvokeClassVisitor.MethodCallLocation;

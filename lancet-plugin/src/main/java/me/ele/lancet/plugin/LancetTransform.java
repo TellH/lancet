@@ -203,9 +203,10 @@ class LancetTransform extends Transform {
             }
         }
 
-        handleErrorLog(errorLog);
-
-        CheckMethodInvokeClassVisitor.clearCache();
+        Log.e("Not Found Methods: " + errorLog.toString());
+        if (!errorLog.isEmpty() && lancetExtension.isStrictMode()) {
+            throw new RuntimeException(errorLog.toString());
+        }
 
         Log.i("build successfully done");
         Log.i("now: " + System.currentTimeMillis());
@@ -213,13 +214,6 @@ class LancetTransform extends Transform {
         cache.saveToLocal();
         Log.i("cache saved");
         Log.i("now: " + System.currentTimeMillis());
-    }
-
-    private void handleErrorLog(Set<String> errorLog) {
-        Log.e("Not Found Methods: " + errorLog.toString());
-        if (!errorLog.isEmpty() && lancetExtension.isStrictMode()) {
-            throw new RuntimeException(errorLog.toString());
-        }
     }
 
     private boolean checkIfSuperMethodExisted(Graph graph, String className, String methodName, String desc, MethodCallLocation value, Set<String> errorLog) {
