@@ -23,30 +23,13 @@ import me.ele.lancet.weaver.internal.util.TypeUtil;
 public class CheckMethodInvokeClassVisitor extends LinkedClassVisitor {
     // 不能存接口方法和抽象方法
     // key是ClassName#MethodName#descriptor
-    private static Map<String, MethodCallLocation> methodCache;
+    private static volatile Map<String, MethodCallLocation> methodCache;
     private Graph graph;
-    private static Set<Pattern> excludeClass; // 白名单，这些类的方法不检查
+    private static volatile Set<Pattern> excludeClass; // 白名单，这些类的方法不检查
     public static final String SEPARATOR = "#";
 
     private String className;
     private boolean isInterface;
-
-    static {
-        methodCache = new ConcurrentHashMap<>();
-        excludeClass = new HashSet<>();
-        excludeClass.add(Pattern.compile("android(/.+)"));
-        excludeClass.add(Pattern.compile("java(/.+)"));
-        excludeClass.add(Pattern.compile("org/apache(/.+)"));
-        excludeClass.add(Pattern.compile("org/xml(/.+)"));
-        excludeClass.add(Pattern.compile("org/w3c(/.+)"));
-        excludeClass.add(Pattern.compile("org/json(/.+)"));
-        excludeClass.add(Pattern.compile("org/xmlpull(/.+)"));
-        excludeClass.add(Pattern.compile("com/android(/.+)"));
-        excludeClass.add(Pattern.compile("javax(/.+)"));
-        excludeClass.add(Pattern.compile("dalvik(/.+)"));
-        excludeClass.add(Pattern.compile("(\\[L)+.+")); // 对象数组
-        excludeClass.add(Pattern.compile("\\[+[BCDFISZJ]")); // 数组
-    }
 
     private boolean shouldCheck;
 
@@ -66,7 +49,7 @@ public class CheckMethodInvokeClassVisitor extends LinkedClassVisitor {
                     String key = String.join(SEPARATOR, className, m.name, m.desc);
                     // 排除接口方法和抽象方法
                     if (!isInterface && !TypeUtil.isAbstract(m.access)) {
-                        methodCache.put(key, new MethodCallLocation(true));
+                        getMethodCache().put(key, new MethodCallLocation(true));
                     }
                 });
             }
@@ -76,7 +59,7 @@ public class CheckMethodInvokeClassVisitor extends LinkedClassVisitor {
 
     public static boolean shouldCheck(String className) {
         boolean matched = false;
-        for (Pattern pattern : excludeClass) {
+        for (Pattern pattern : getExcludeClass()) {
             if (pattern.matcher(className).matches()) {
                 matched = true;
                 break;
@@ -95,11 +78,40 @@ public class CheckMethodInvokeClassVisitor extends LinkedClassVisitor {
     }
 
     public static Map<String, MethodCallLocation> getMethodCache() {
+        if (methodCache == null) {
+            synchronized (CheckMethodInvokeClassVisitor.class) {
+                if (methodCache == null) methodCache = new ConcurrentHashMap<>();
+            }
+        }
         return methodCache;
     }
 
     public static Set<Pattern> getExcludeClass() {
+        if (excludeClass == null) {
+            synchronized (CheckMethodInvokeClassVisitor.class) {
+                if (excludeClass == null) {
+                    excludeClass = new HashSet<>();
+                    excludeClass.add(Pattern.compile("android(/.+)"));
+                    excludeClass.add(Pattern.compile("java(/.+)"));
+                    excludeClass.add(Pattern.compile("org/apache(/.+)"));
+                    excludeClass.add(Pattern.compile("org/xml(/.+)"));
+                    excludeClass.add(Pattern.compile("org/w3c(/.+)"));
+                    excludeClass.add(Pattern.compile("org/json(/.+)"));
+                    excludeClass.add(Pattern.compile("org/xmlpull(/.+)"));
+                    excludeClass.add(Pattern.compile("com/android(/.+)"));
+                    excludeClass.add(Pattern.compile("javax(/.+)"));
+                    excludeClass.add(Pattern.compile("dalvik(/.+)"));
+                    excludeClass.add(Pattern.compile("(\\[L)+.+")); // 对象数组
+                    excludeClass.add(Pattern.compile("\\[+[BCDFISZJ]")); // 数组
+                }
+            }
+        }
         return excludeClass;
+    }
+
+    public static void clearCache() {
+        methodCache = null;
+        excludeClass = null;
     }
 
     public static class MethodCallLocation {

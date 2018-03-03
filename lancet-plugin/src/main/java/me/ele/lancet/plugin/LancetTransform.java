@@ -59,8 +59,6 @@ class LancetTransform extends Transform {
     private final LancetExtension lancetExtension;
     private final GlobalContext global;
     private LocalCache cache;
-    private Set<String> errorLog = new HashSet<>();
-
 
     public LancetTransform(Project project, LancetExtension lancetExtension) {
         this.lancetExtension = lancetExtension;
@@ -164,6 +162,7 @@ class LancetTransform extends Transform {
             }
         }
         new ContextReader(context).accept(incremental, new TransformProcessor(context, weaver));
+        Set<String> errorLog = new HashSet<>();
         if (lancetExtension.isCheckUselessProxyMethodEnable()) {
             List<ProxyInfo> proxyInfoList = transformInfo.proxyInfo;
             proxyInfoList.forEach(info -> {
@@ -190,7 +189,7 @@ class LancetTransform extends Transform {
                     .filter(entry -> {
                         String[] split = entry.getKey().split(SEPARATOR);
                         String className = split[0];
-                        return !checkIfSuperMethodExisted(context.getGraph(), className, split[1], split[2], entry.getValue())
+                        return !checkIfSuperMethodExisted(context.getGraph(), className, split[1], split[2], entry.getValue(), errorLog)
                                 && CheckMethodInvokeClassVisitor.shouldCheck(className);
                     })
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -204,7 +203,9 @@ class LancetTransform extends Transform {
             }
         }
 
-        handleErrorLog();
+        handleErrorLog(errorLog);
+
+        CheckMethodInvokeClassVisitor.clearCache();
 
         Log.i("build successfully done");
         Log.i("now: " + System.currentTimeMillis());
@@ -214,21 +215,14 @@ class LancetTransform extends Transform {
         Log.i("now: " + System.currentTimeMillis());
     }
 
-    private void handleErrorLog() {
-        File log = new File(global.getLancetExtraDir(), "error_log.txt");
-        try {
-            Writer writer = Files.newWriter(log, Charsets.UTF_8);
-            writer.write(errorLog.toString());
-            writer.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private void handleErrorLog(Set<String> errorLog) {
+        Log.e("Not Found Methods: " + errorLog.toString());
         if (!errorLog.isEmpty() && lancetExtension.isStrictMode()) {
             throw new RuntimeException(errorLog.toString());
         }
     }
 
-    private boolean checkIfSuperMethodExisted(Graph graph, String className, String methodName, String desc, MethodCallLocation value) {
+    private boolean checkIfSuperMethodExisted(Graph graph, String className, String methodName, String desc, MethodCallLocation value, Set<String> errorLog) {
         Node node = graph.get(className);
         if (node == null) {
             errorLog.add(String.format("Class: %s not found, with Method: %s. It was called at Class: %s, Method: %s \n",

@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 import me.ele.lancet.plugin.internal.preprocess.MetaGraphGeneratorImpl;
 import me.ele.lancet.weaver.internal.asm.classvisitor.CheckMethodInvokeClassVisitor;
 import me.ele.lancet.weaver.internal.graph.ClassEntity;
+import me.ele.lancet.weaver.internal.log.Log;
 
 /**
  * Created by tlh on 2018/2/7.
@@ -39,6 +40,8 @@ public class ExtraCache {
         whiteList = loadWhiteList();
         Set<Pattern> excludeClass = CheckMethodInvokeClassVisitor.getExcludeClass();
         whiteList.forEach(s -> excludeClass.add(Pattern.compile(s)));
+        Log.i("Check white list size: " + excludeClass.size());
+        excludeClass.forEach(clz -> Log.i("Exclude checking class: " + clz));
     }
 
     private List<String> loadWhiteList() {
