@@ -99,7 +99,7 @@ public class CheckMethodInvokeClassVisitor extends LinkedClassVisitor {
         return excludeClass;
     }
 
-    public synchronized static void initCheckingClassWhiteList(List<String> whiteList) {
+    public synchronized static void initCheckingMethodCLassVisitor(List<String> whiteList) {
         Set<Pattern> excludeClass = getExcludeClass();
         if (!excludeClass.isEmpty()) {
             excludeClass.clear();
@@ -119,11 +119,11 @@ public class CheckMethodInvokeClassVisitor extends LinkedClassVisitor {
         whiteList.forEach(s -> excludeClass.add(Pattern.compile(s)));
 
         excludeClass.forEach(clz -> Log.i("Exclude checking class: " + clz));
-    }
 
-    public static void clearCache() {
-        methodCache = null;
-        excludeClass = null;
+        Map<String, MethodCallLocation> methodCache = getMethodCache();
+        if (!methodCache.isEmpty()) {
+            methodCache.clear();
+        }
     }
 
     public static class MethodCallLocation {
