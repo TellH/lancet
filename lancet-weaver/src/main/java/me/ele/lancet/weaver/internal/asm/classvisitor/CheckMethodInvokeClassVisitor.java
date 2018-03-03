@@ -4,6 +4,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,6 +14,7 @@ import me.ele.lancet.weaver.internal.asm.LinkedClassVisitor;
 import me.ele.lancet.weaver.internal.asm.classvisitor.methodvisitor.CheckNotFoundMethodVisitor;
 import me.ele.lancet.weaver.internal.graph.Graph;
 import me.ele.lancet.weaver.internal.graph.Node;
+import me.ele.lancet.weaver.internal.log.Log;
 import me.ele.lancet.weaver.internal.util.TypeUtil;
 
 /**
@@ -91,22 +93,32 @@ public class CheckMethodInvokeClassVisitor extends LinkedClassVisitor {
             synchronized (CheckMethodInvokeClassVisitor.class) {
                 if (excludeClass == null) {
                     excludeClass = new HashSet<>();
-                    excludeClass.add(Pattern.compile("android(/.+)"));
-                    excludeClass.add(Pattern.compile("java(/.+)"));
-                    excludeClass.add(Pattern.compile("org/apache(/.+)"));
-                    excludeClass.add(Pattern.compile("org/xml(/.+)"));
-                    excludeClass.add(Pattern.compile("org/w3c(/.+)"));
-                    excludeClass.add(Pattern.compile("org/json(/.+)"));
-                    excludeClass.add(Pattern.compile("org/xmlpull(/.+)"));
-                    excludeClass.add(Pattern.compile("com/android(/.+)"));
-                    excludeClass.add(Pattern.compile("javax(/.+)"));
-                    excludeClass.add(Pattern.compile("dalvik(/.+)"));
-                    excludeClass.add(Pattern.compile("(\\[L)+.+")); // 对象数组
-                    excludeClass.add(Pattern.compile("\\[+[BCDFISZJ]")); // 数组
                 }
             }
         }
         return excludeClass;
+    }
+
+    public synchronized static void initCheckingClassWhiteList(List<String> whiteList) {
+        Set<Pattern> excludeClass = getExcludeClass();
+        if (!excludeClass.isEmpty()) {
+            excludeClass.clear();
+        }
+        excludeClass.add(Pattern.compile("android(/.+)"));
+        excludeClass.add(Pattern.compile("java(/.+)"));
+        excludeClass.add(Pattern.compile("org/apache(/.+)"));
+        excludeClass.add(Pattern.compile("org/xml(/.+)"));
+        excludeClass.add(Pattern.compile("org/w3c(/.+)"));
+        excludeClass.add(Pattern.compile("org/json(/.+)"));
+        excludeClass.add(Pattern.compile("org/xmlpull(/.+)"));
+        excludeClass.add(Pattern.compile("com/android(/.+)"));
+        excludeClass.add(Pattern.compile("javax(/.+)"));
+        excludeClass.add(Pattern.compile("dalvik(/.+)"));
+        excludeClass.add(Pattern.compile("(\\[L)+.+")); // 对象数组
+        excludeClass.add(Pattern.compile("\\[+[BCDFISZJ]")); // 数组
+        whiteList.forEach(s -> excludeClass.add(Pattern.compile(s)));
+
+        excludeClass.forEach(clz -> Log.i("Exclude checking class: " + clz));
     }
 
     public static void clearCache() {

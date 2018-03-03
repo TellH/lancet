@@ -38,10 +38,7 @@ public class ExtraCache {
         checkWhiteListFile = new File(dir, "white_list.json");
         classMetas = load();
         whiteList = loadWhiteList();
-        Set<Pattern> excludeClass = CheckMethodInvokeClassVisitor.getExcludeClass();
-        whiteList.forEach(s -> excludeClass.add(Pattern.compile(s)));
-        Log.i("Check white list size: " + excludeClass.size());
-        excludeClass.forEach(clz -> Log.i("Exclude checking class: " + clz));
+        CheckMethodInvokeClassVisitor.initCheckingClassWhiteList(whiteList);
     }
 
     private List<String> loadWhiteList() {
