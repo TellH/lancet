@@ -22,7 +22,7 @@ buildscript {
         guava_version = '20.0'
 
         upload_group = 'com.tellh.me.ele'
-        upload_version = '1.0.2-alpha'
+        upload_version = '1.0.1.1'
     }
     repositories {
         jcenter()
