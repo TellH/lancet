@@ -147,9 +147,9 @@ class LancetTransform extends Transform {
         if (lancetExtension.isCheckUselessProxyMethodEnable()) {
             List<ProxyInfo> proxyInfoList = transformInfo.proxyInfo;
             proxyInfoList.forEach(info -> {
-                if (!info.isTargetMethodExist) {
-                    errorLog.add(String.format("@Proxy: %s target method is not exist!", info.toString()));
-                }
+//                if (!info.isTargetMethodExist) {
+//                    errorLog.add(String.format("@Proxy: %s target method is not exist!", info.toString()));
+//                }
                 if (!info.isEffective) {
                     errorLog.add(String.format("@Proxy: %s is useless!", info.toString()));
                 }
