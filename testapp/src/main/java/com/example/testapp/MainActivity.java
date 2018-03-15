@@ -4,6 +4,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 
+import java.util.List;
+import java.util.Map;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -24,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
         TestList list = new TestList();
         list.add("haha");
         list.get(0);
-
+        Log.d(TAG, ConfigLoader.getCLASSES().size() + "");
     }
 
     @Override
