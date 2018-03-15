@@ -8,7 +8,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import me.ele.lancet.plugin.Util;
 import me.ele.lancet.plugin.internal.ExtraCache;
@@ -20,13 +22,12 @@ import me.ele.lancet.weaver.internal.log.Log;
 
 /**
  * Created by gengwanpeng on 17/4/26.
- *
+ * <p>
  * When you see this class you may be as happy as me like this:
  * <a href="http://wx1.sinaimg.cn/large/415f82b9ly1fe9kqcoe2nj20k00k0dhy.jpg"></a>
- *
+ * <p>
  * PreClassAnalysis mainly records the dependency graph of all classes,
  * and record the hook classes to judge if incremental compile available in next time.
- *
  */
 public class PreClassAnalysis {
 
@@ -34,6 +35,7 @@ public class PreClassAnalysis {
     private ExtraCache extraCache;
     private MetaGraphGeneratorImpl graph;
     private PreClassProcessor classProcessor = new AsmClassProcessorImpl();
+    public Map<String, String> spiServices = new ConcurrentHashMap<>();
 
 
     private ContextReader contextReader;
@@ -63,7 +65,7 @@ public class PreClassAnalysis {
 
         contextReader = new ContextReader(context);
 
-        if (incremental && context.isIncremental() && !cache.isHookClassModified(context)){
+        if (incremental && context.isIncremental() && !cache.isHookClassModified(context)) {
             // can use incremental
             partial = true;
 
@@ -155,6 +157,9 @@ public class PreClassAnalysis {
                 } else {
                     graph.remove(result.entity.name);
                 }
+            } else if (relativePath.startsWith("services")) {
+                String[] split = relativePath.split("/");
+                spiServices.put(split[split.length - 1], new String(bytes));
             }
         }
 

@@ -2,6 +2,7 @@
 package me.ele.lancet.plugin;
 
 import com.google.common.base.Strings;
+
 import me.ele.lancet.weaver.internal.log.Log;
 
 import java.io.File;
@@ -14,6 +15,7 @@ public class LancetExtension {
     private boolean checkUselessProxyMethodEnable = false;
     private boolean checkMethodNotFoundEnable = true;
     private boolean strictMode;
+    private SpiExtension spiExtension;
 
     public void logLevel(Log.Level level) {
         this.level = Objects.requireNonNull(level, "Log.Level is null");
@@ -96,5 +98,13 @@ public class LancetExtension {
 
     public boolean isStrictMode() {
         return strictMode;
+    }
+
+    public SpiExtension getSpiExtension() {
+        return spiExtension;
+    }
+
+    public void setSpiExtension(SpiExtension spiExtension) {
+        this.spiExtension = spiExtension;
     }
 }

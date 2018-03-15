@@ -10,12 +10,10 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
 
-import org.apache.commons.io.Charsets;
 import org.gradle.api.Project;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -51,6 +49,7 @@ import me.ele.lancet.weaver.internal.graph.Node;
 import me.ele.lancet.weaver.internal.log.Impl.FileLoggerImpl;
 import me.ele.lancet.weaver.internal.log.Log;
 import me.ele.lancet.weaver.internal.parser.AsmMetaParser;
+import me.ele.lancet.weaver.spi.SpiModel;
 
 import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckMethodInvokeClassVisitor.SEPARATOR;
 
@@ -133,6 +132,7 @@ class LancetTransform extends Transform {
 
         boolean incremental = lancetExtension.getIncremental();
         PreClassAnalysis preClassAnalysis = new PreClassAnalysis(cache, new ExtraCache(global.getLancetExtraDir()));
+        fetchSpiServicesFiles(preClassAnalysis); // 业务模块化的接口配置文件
         incremental = preClassAnalysis.execute(incremental, context);
 
         Log.i("after pre analysis, incremental: " + incremental);
@@ -149,6 +149,10 @@ class LancetTransform extends Transform {
         context.getGraph().flow().clear();
         TransformInfo transformInfo = parser.parse(context.getHookClasses(), context.getGraph());
         transformInfo.enableCheckMethodNotFound = Util.enableCheckMethodNotFound();
+        transformInfo.spiModel = new SpiModel(
+                preClassAnalysis.spiServices,
+                lancetExtension.getSpiExtension().getSpiServicePath(),
+                lancetExtension.getSpiExtension().getInjectClassName());
 
         Weaver weaver = AsmWeaver.newInstance(transformInfo, context.getGraph());
         Map<String, List<InsertInfo>> executeInfoBak = new HashMap<>();
@@ -214,6 +218,23 @@ class LancetTransform extends Transform {
         cache.saveToLocal();
         Log.i("cache saved");
         Log.i("now: " + System.currentTimeMillis());
+    }
+
+    private void fetchSpiServicesFiles(PreClassAnalysis preClassAnalysis) throws IOException {
+        SpiExtension spi = lancetExtension.getSpiExtension();
+        if (spi == null) {
+            return;
+        }
+        File spiServiceDir = global.getSpiServiceDir(spi.getSpiServicePath());
+        if (spiServiceDir != null) {
+            Map<String, String> spiServices = preClassAnalysis.spiServices;
+            for (File f : Files.fileTreeTraverser().preOrderTraversal(spiServiceDir)) {
+                if (f.isFile() && !f.getName().equalsIgnoreCase(".DS_Store")) {
+                    byte[] data = Files.toByteArray(f);
+                    spiServices.put(f.getName(), new String(data));
+                }
+            }
+        }
     }
 
     private boolean checkIfSuperMethodExisted(Graph graph, String className, String methodName, String desc, MethodCallLocation value, Set<String> errorLog) {

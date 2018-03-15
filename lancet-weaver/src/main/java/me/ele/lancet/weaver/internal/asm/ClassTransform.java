@@ -16,6 +16,7 @@ import me.ele.lancet.weaver.internal.asm.classvisitor.TryCatchInfoClassVisitor;
 import me.ele.lancet.weaver.internal.entity.InsertInfo;
 import me.ele.lancet.weaver.internal.entity.TransformInfo;
 import me.ele.lancet.weaver.internal.graph.Graph;
+import me.ele.lancet.weaver.spi.SpiClassVisitor;
 
 /**
  * Created by Jude on 2017/4/25.
@@ -39,6 +40,9 @@ public class ClassTransform {
         transform.connect(new ProxyClassVisitor(transformInfo.proxyInfo));
         transform.connect(new InsertClassVisitor(transformInfo.executeInfo));
         transform.connect(new TryCatchInfoClassVisitor(transformInfo.tryCatchInfo));
+        if (transformInfo.spiModel != null && internalName.equals(transformInfo.spiModel.getInjectClassName())) {
+            transform.connect(new SpiClassVisitor(transformInfo.spiModel));
+        }
         transform.startTransform();
         return classCollector.generateClassBytes();
     }

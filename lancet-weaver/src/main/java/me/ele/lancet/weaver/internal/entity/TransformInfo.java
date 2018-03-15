@@ -3,6 +3,8 @@ package me.ele.lancet.weaver.internal.entity;
 
 import java.util.*;
 
+import me.ele.lancet.weaver.spi.SpiModel;
+
 /**
  * Created by gengwanpeng on 17/3/27.
  *
@@ -20,6 +22,7 @@ public class TransformInfo {
     public List<TryCatchInfo> tryCatchInfo = new ArrayList<>();
     public Set<String> hookClasses = new HashSet<>();
     public boolean enableCheckMethodNotFound;
+    public SpiModel spiModel;
 
     public TransformInfo(List<String> hookClasses) {
         this.hookClasses.addAll(hookClasses);

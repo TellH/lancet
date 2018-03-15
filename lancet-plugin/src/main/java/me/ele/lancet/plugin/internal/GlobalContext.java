@@ -23,4 +23,8 @@ public class GlobalContext {
     public File getLancetExtraDir() {
         return new File(project.getRootDir(), "lancet_extra");
     }
+
+    public File getSpiServiceDir(String spiServicePath) {
+        return spiServicePath != null ? new File(project.getRootDir(), spiServicePath) : null;
+    }
 }
