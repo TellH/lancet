@@ -7,6 +7,8 @@ package me.ele.lancet.plugin;
 public class SpiExtension {
     private String spiServicePath;
     private String injectClassName;
+    private String proguardFilePath;
+
     public String getSpiServicePath() {
         return spiServicePath;
     }
@@ -21,5 +23,13 @@ public class SpiExtension {
 
     public void setInjectClassName(String injectClassName) {
         this.injectClassName = injectClassName;
+    }
+
+    public String getProguardFilePath() {
+        return proguardFilePath;
+    }
+
+    public void setProguardFilePath(String proguardFilePath) {
+        this.proguardFilePath = proguardFilePath;
     }
 }

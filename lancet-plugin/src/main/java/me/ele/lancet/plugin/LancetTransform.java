@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,6 +26,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -153,6 +156,7 @@ class LancetTransform extends Transform {
                 preClassAnalysis.spiServices,
                 lancetExtension.getSpiExtension().getSpiServicePath(),
                 lancetExtension.getSpiExtension().getInjectClassName());
+        parseProguardRulesFile(preClassAnalysis.spiServices);
 
         Weaver weaver = AsmWeaver.newInstance(transformInfo, context.getGraph());
         Map<String, List<InsertInfo>> executeInfoBak = new HashMap<>();
@@ -207,6 +211,11 @@ class LancetTransform extends Transform {
             }
         }
 
+        List<String> spiClass = transformInfo.spiModel.getNotExistSpiClass();
+        if (spiClass != null && !spiClass.isEmpty()) {
+            throw new RuntimeException(String.format("Spi Service class not found: %s", spiClass.toString()));
+        }
+
         Log.e("Not Found Methods: " + errorLog.toString());
         if (!errorLog.isEmpty() && lancetExtension.isStrictMode()) {
             throw new RuntimeException(errorLog.toString());
@@ -220,12 +229,45 @@ class LancetTransform extends Transform {
         Log.i("now: " + System.currentTimeMillis());
     }
 
+    private void parseProguardRulesFile(Map<String, String> spiServices) throws IOException {
+        if (spiServices == null || spiServices.isEmpty()) {
+            return;
+        }
+        SpiExtension spi = lancetExtension.getSpiExtension();
+        if (spi == null) {
+            return;
+        }
+        File file = global.getFile(spi.getProguardFilePath());
+        if (file == null) {
+            return;
+        }
+        if (file.exists() && file.isFile()) {
+            Set<String> proguardInterfaces = new HashSet<>();
+            Pattern p = Pattern.compile("-keep class \\S* implements (?<classname>[\\w.*]*)");
+            Files.readLines(file, Charset.defaultCharset()).forEach(line -> {
+                line = line.trim();
+                if (!line.startsWith("#")) { // 注释不理
+                    Matcher matcher = p.matcher(line);
+                    if (matcher.find()) {
+                        proguardInterfaces.add(matcher.group("classname"));
+                    }
+                }
+            });
+            spiServices.keySet().forEach(i -> {
+                if (!proguardInterfaces.contains(i)) {
+                    throw new RuntimeException(String.format("SPI Interface %s should be added to proguard-rules.pro. Reference: \n" +
+                            "-keep class * implements %s\n", i, i));
+                }
+            });
+        }
+    }
+
     private void fetchSpiServicesFiles(PreClassAnalysis preClassAnalysis) throws IOException {
         SpiExtension spi = lancetExtension.getSpiExtension();
         if (spi == null) {
             return;
         }
-        File spiServiceDir = global.getSpiServiceDir(spi.getSpiServicePath());
+        File spiServiceDir = global.getFile(spi.getSpiServicePath());
         if (spiServiceDir != null) {
             Map<String, String> spiServices = preClassAnalysis.spiServices;
             for (File f : Files.fileTreeTraverser().preOrderTraversal(spiServiceDir)) {
