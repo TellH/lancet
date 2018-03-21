@@ -75,8 +75,9 @@ public class ClassTransform {
         if (transformInfo.enableCheckMethodNotFound) {
             cr.accept(new CheckMethodInvokeClassVisitor(graph), ClassReader.SKIP_DEBUG);
         }
-
-        transformInfo.spiModel.recordSpiService(internalName);
+        if (transformInfo.spiModel != null) {
+            transformInfo.spiModel.recordSpiService(internalName);
+        }
     }
 
     private LinkedClassVisitor mHeadVisitor;

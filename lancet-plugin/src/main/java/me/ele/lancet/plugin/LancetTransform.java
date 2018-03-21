@@ -152,10 +152,13 @@ class LancetTransform extends Transform {
         context.getGraph().flow().clear();
         TransformInfo transformInfo = parser.parse(context.getHookClasses(), context.getGraph());
         transformInfo.enableCheckMethodNotFound = Util.enableCheckMethodNotFound();
-        transformInfo.spiModel = new SpiModel(
-                preClassAnalysis.spiServices,
-                lancetExtension.getSpiExtension().getSpiServicePath(),
-                lancetExtension.getSpiExtension().getInjectClassName());
+        SpiExtension spiExtension = lancetExtension.getSpiExtension();
+        if (spiExtension != null) {
+            transformInfo.spiModel = new SpiModel(
+                    preClassAnalysis.spiServices,
+                    spiExtension.getSpiServicePath(),
+                    spiExtension.getInjectClassName());
+        }
         parseProguardRulesFile(preClassAnalysis.spiServices);
 
         Weaver weaver = AsmWeaver.newInstance(transformInfo, context.getGraph());
@@ -211,9 +214,11 @@ class LancetTransform extends Transform {
             }
         }
 
-        List<String> spiClass = transformInfo.spiModel.getNotExistSpiClass();
-        if (spiClass != null && !spiClass.isEmpty()) {
-            throw new RuntimeException(String.format("Spi Service class not found: %s", spiClass.toString()));
+        if (transformInfo.spiModel != null) {
+            List<String> spiClass = transformInfo.spiModel.getNotExistSpiClass();
+            if (spiClass != null && !spiClass.isEmpty()) {
+                throw new RuntimeException(String.format("Spi Service class not found: %s", spiClass.toString()));
+            }
         }
 
         Log.e("Not Found Methods: " + errorLog.toString());
