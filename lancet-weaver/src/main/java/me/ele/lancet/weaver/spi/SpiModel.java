@@ -31,6 +31,7 @@ public class SpiModel {
                 }
             }
         }
+        serviceClassExistRecords.put(injectClassName.replace("/", "."), false);
     }
 
     public Map<String, String> getSpiServices() {

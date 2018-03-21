@@ -256,7 +256,7 @@ class LancetTransform extends Transform {
             spiServices.keySet().forEach(i -> {
                 if (!proguardInterfaces.contains(i)) {
                     throw new RuntimeException(String.format("SPI Interface %s should be added to proguard-rules.pro. Reference: \n" +
-                            "-keep class * implements %s\n", i, i));
+                            "-keep class * implements %s { *; }\n", i, i));
                 }
             });
         }

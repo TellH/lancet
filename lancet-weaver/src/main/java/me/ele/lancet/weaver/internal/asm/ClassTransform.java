@@ -17,7 +17,6 @@ import me.ele.lancet.weaver.internal.entity.InsertInfo;
 import me.ele.lancet.weaver.internal.entity.TransformInfo;
 import me.ele.lancet.weaver.internal.graph.Graph;
 import me.ele.lancet.weaver.spi.SpiClassVisitor;
-import me.ele.lancet.weaver.spi.SpiServiceImplClassVisitor;
 
 /**
  * Created by Jude on 2017/4/25.
