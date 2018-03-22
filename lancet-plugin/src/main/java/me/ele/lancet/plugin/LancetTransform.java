@@ -153,13 +153,14 @@ class LancetTransform extends Transform {
         TransformInfo transformInfo = parser.parse(context.getHookClasses(), context.getGraph());
         transformInfo.enableCheckMethodNotFound = Util.enableCheckMethodNotFound();
         SpiExtension spiExtension = lancetExtension.getSpiExtension();
-        if (spiExtension != null) {
+        if (spiExtension != null &&
+                spiExtension.getInjectClassName() != null && spiExtension.getSpiServicePath() != null) {
             transformInfo.spiModel = new SpiModel(
                     preClassAnalysis.spiServices,
                     spiExtension.getSpiServicePath(),
                     spiExtension.getInjectClassName());
+            parseProguardRulesFile(preClassAnalysis.spiServices);
         }
-        parseProguardRulesFile(preClassAnalysis.spiServices);
 
         Weaver weaver = AsmWeaver.newInstance(transformInfo, context.getGraph());
         Map<String, List<InsertInfo>> executeInfoBak = new HashMap<>();
@@ -239,7 +240,7 @@ class LancetTransform extends Transform {
             return;
         }
         SpiExtension spi = lancetExtension.getSpiExtension();
-        if (spi == null) {
+        if (spi == null || spi.getProguardFilePath() == null) {
             return;
         }
         File file = global.getFile(spi.getProguardFilePath());
@@ -269,7 +270,7 @@ class LancetTransform extends Transform {
 
     private void fetchSpiServicesFiles(PreClassAnalysis preClassAnalysis) throws IOException {
         SpiExtension spi = lancetExtension.getSpiExtension();
-        if (spi == null) {
+        if (spi == null || spi.getSpiServicePath() == null) {
             return;
         }
         File spiServiceDir = global.getFile(spi.getSpiServicePath());
