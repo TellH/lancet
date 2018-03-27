@@ -259,12 +259,14 @@ class LancetTransform extends Transform {
                     }
                 }
             });
-            spiServices.keySet().forEach(i -> {
-                if (!proguardInterfaces.contains(i)) {
-                    throw new RuntimeException(String.format("SPI Interface %s should be added to proguard-rules.pro. Reference: \n" +
-                            "-keep class * implements %s { *; }\n", i, i));
-                }
-            });
+            List<String> proguardNotFoundList = spiServices.keySet().stream()
+                    .filter(i -> !proguardInterfaces.contains(i))
+                    .map(i -> String.format("SPI Interface %s should be added to proguard-rules.pro. Reference: \n" +
+                            "-keep class * implements %s { *; }\n", i, i))
+                    .collect(Collectors.toList());
+            if (proguardNotFoundList != null && !proguardNotFoundList.isEmpty()) {
+                throw new RuntimeException(proguardNotFoundList.toString());
+            }
         }
     }
 
