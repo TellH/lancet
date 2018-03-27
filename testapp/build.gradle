@@ -52,7 +52,7 @@ lancet {
     checkUselessProxyMethodEnable true
     strictMode true
     spi {
-        spiServicePath "testapp/src/main/resources"
+        spiServiceDirs "testapp/src/main/resources"
         injectClassName "com/example/testapp/ConfigLoader"
     }
 }
