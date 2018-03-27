@@ -11,13 +11,11 @@ import java.util.stream.Collectors;
 
 public class SpiModel {
     private Map<String, String> spiServices;
-    private String spiServicePath;
     private String injectClassName;
     private Map<String, Boolean> serviceClassExistRecords; // 检查SPI接口和实现类是否存在
 
-    public SpiModel(Map<String, String> spiServices, String spiServicePath, String injectClassName) {
+    public SpiModel(Map<String, String> spiServices, String injectClassName) {
         this.spiServices = spiServices;
-        this.spiServicePath = spiServicePath;
         this.injectClassName = injectClassName;
         serviceClassExistRecords = new HashMap<>();
         for (Map.Entry<String, String> entry : spiServices.entrySet()) {
@@ -40,14 +38,6 @@ public class SpiModel {
 
     public void setSpiServices(Map<String, String> spiServices) {
         this.spiServices = spiServices;
-    }
-
-    public String getSpiServicePath() {
-        return spiServicePath;
-    }
-
-    public void setSpiServicePath(String spiServicePath) {
-        this.spiServicePath = spiServicePath;
     }
 
     public String getInjectClassName() {

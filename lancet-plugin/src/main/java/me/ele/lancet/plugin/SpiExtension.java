@@ -5,16 +5,16 @@ package me.ele.lancet.plugin;
  */
 
 public class SpiExtension {
-    private String spiServicePath;
+    private String[] spiServiceDirs;
     private String injectClassName;
     private String proguardFilePath;
 
-    public String getSpiServicePath() {
-        return spiServicePath;
+    public String[] getSpiServiceDirs() {
+        return spiServiceDirs;
     }
 
-    public void setSpiServicePath(String spiServicePath) {
-        this.spiServicePath = spiServicePath;
+    public void setSpiServiceDirs(String... spiServiceDirs) {
+        this.spiServiceDirs = spiServiceDirs;
     }
 
     public String getInjectClassName() {

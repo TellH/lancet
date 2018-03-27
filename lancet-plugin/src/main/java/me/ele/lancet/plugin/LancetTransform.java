@@ -154,10 +154,9 @@ class LancetTransform extends Transform {
         transformInfo.enableCheckMethodNotFound = Util.enableCheckMethodNotFound();
         SpiExtension spiExtension = lancetExtension.getSpiExtension();
         if (spiExtension != null &&
-                spiExtension.getInjectClassName() != null && spiExtension.getSpiServicePath() != null) {
+                spiExtension.getInjectClassName() != null && spiExtension.getSpiServiceDirs() != null) {
             transformInfo.spiModel = new SpiModel(
                     preClassAnalysis.spiServices,
-                    spiExtension.getSpiServicePath(),
                     spiExtension.getInjectClassName());
             parseProguardRulesFile(preClassAnalysis.spiServices);
         }
@@ -272,16 +271,19 @@ class LancetTransform extends Transform {
 
     private void fetchSpiServicesFiles(PreClassAnalysis preClassAnalysis) throws IOException {
         SpiExtension spi = lancetExtension.getSpiExtension();
-        if (spi == null || spi.getSpiServicePath() == null) {
+        String[] spiServiceDirs = spi.getSpiServiceDirs();
+        if (spiServiceDirs == null || spiServiceDirs.length == 0) {
             return;
         }
-        File spiServiceDir = global.getFile(spi.getSpiServicePath());
-        if (spiServiceDir != null) {
-            Map<String, String> spiServices = preClassAnalysis.spiServices;
-            for (File f : Files.fileTreeTraverser().preOrderTraversal(spiServiceDir)) {
-                if (f.isFile() && !f.getName().equalsIgnoreCase(".DS_Store")) {
-                    byte[] data = Files.toByteArray(f);
-                    spiServices.put(f.getName(), new String(data));
+        Map<String, String> spiServices = preClassAnalysis.spiServices;
+        for (String path : spiServiceDirs) {
+            File spiServiceDir = global.getFile(path);
+            if (spiServiceDir != null && spiServiceDir.isDirectory()) {
+                for (File f : Files.fileTreeTraverser().preOrderTraversal(spiServiceDir)) {
+                    if (f.isFile() && !f.getName().equalsIgnoreCase(".DS_Store")) {
+                        byte[] data = Files.toByteArray(f);
+                        spiServices.put(f.getName(), new String(data));
+                    }
                 }
             }
         }
