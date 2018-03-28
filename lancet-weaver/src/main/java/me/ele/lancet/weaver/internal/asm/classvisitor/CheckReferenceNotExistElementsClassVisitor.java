@@ -1,5 +1,7 @@
 package me.ele.lancet.weaver.internal.asm.classvisitor;
 
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -19,10 +21,11 @@ import me.ele.lancet.weaver.internal.util.TypeUtil;
 
 /**
  * Created by tanlehua on 2018/2/6.
- * 检查每一次方法调用是否存在对应的方法和相应的类
+ * 1. 检查每一次方法调用是否存在对应的方法和相应的类
+ * 2. 检查是否引用了不存在的注解
  */
 
-public class CheckMethodInvokeClassVisitor extends LinkedClassVisitor {
+public class CheckReferenceNotExistElementsClassVisitor extends LinkedClassVisitor {
     // 不能存接口方法和抽象方法
     // key是ClassName#MethodName#descriptor
     private static volatile Map<String, MethodCallLocation> methodCache;
@@ -35,7 +38,9 @@ public class CheckMethodInvokeClassVisitor extends LinkedClassVisitor {
 
     private boolean shouldCheck;
 
-    public CheckMethodInvokeClassVisitor(Graph graph) {
+    private static volatile Set<AnnotationLocation> notExistAnnotations;
+
+    public CheckReferenceNotExistElementsClassVisitor(Graph graph) {
         this.graph = graph;
     }
 
@@ -79,9 +84,36 @@ public class CheckMethodInvokeClassVisitor extends LinkedClassVisitor {
         return mv;
     }
 
+    @Override
+    public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+        if (graph.get(TypeUtil.desc2Name(desc)) == null) {
+            AnnotationLocation location = new AnnotationLocation(TypeUtil.desc2Name(desc));
+            location.className = className;
+            getNotExistAnnotations().add(location);
+        }
+        return super.visitAnnotation(desc, visible);
+    }
+
+    @Override
+    public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+        FieldVisitor fv = super.visitField(access, name, desc, signature, value);
+        return new FieldVisitor(Opcodes.ASM5, fv) {
+            @Override
+            public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+                if (graph.get(TypeUtil.desc2Name(desc)) == null) {
+                    AnnotationLocation location = new AnnotationLocation(TypeUtil.desc2Name(desc));
+                    location.className = className;
+                    location.fieldName = name;
+                    getNotExistAnnotations().add(location);
+                }
+                return super.visitAnnotation(desc, visible);
+            }
+        };
+    }
+
     public static Map<String, MethodCallLocation> getMethodCache() {
         if (methodCache == null) {
-            synchronized (CheckMethodInvokeClassVisitor.class) {
+            synchronized (CheckReferenceNotExistElementsClassVisitor.class) {
                 if (methodCache == null) methodCache = new ConcurrentHashMap<>();
             }
         }
@@ -90,13 +122,24 @@ public class CheckMethodInvokeClassVisitor extends LinkedClassVisitor {
 
     public static Set<Pattern> getExcludeClass() {
         if (excludeClass == null) {
-            synchronized (CheckMethodInvokeClassVisitor.class) {
+            synchronized (CheckReferenceNotExistElementsClassVisitor.class) {
                 if (excludeClass == null) {
                     excludeClass = new HashSet<>();
                 }
             }
         }
         return excludeClass;
+    }
+
+    public static Set<AnnotationLocation> getNotExistAnnotations() {
+        if (notExistAnnotations == null) {
+            synchronized (CheckReferenceNotExistElementsClassVisitor.class) {
+                if (notExistAnnotations == null) {
+                    notExistAnnotations = new HashSet<>();
+                }
+            }
+        }
+        return notExistAnnotations;
     }
 
     public synchronized static void initCheckingMethodCLassVisitor(List<String> whiteList) {
@@ -124,6 +167,11 @@ public class CheckMethodInvokeClassVisitor extends LinkedClassVisitor {
         if (!methodCache.isEmpty()) {
             methodCache.clear();
         }
+
+        Set<AnnotationLocation> notExistAnnotations = getNotExistAnnotations();
+        if (!notExistAnnotations.isEmpty()) {
+            notExistAnnotations.clear();
+        }
     }
 
     public static class MethodCallLocation {
@@ -142,6 +190,30 @@ public class CheckMethodInvokeClassVisitor extends LinkedClassVisitor {
                     ", methodLoc='" + methodLoc + '\'' +
                     ", exist=" + exist +
                     '}';
+        }
+    }
+
+    public static class AnnotationLocation {
+        public String annoName;
+        public String className;
+        public String fieldName;
+        public String methodName;
+
+        public AnnotationLocation(String annoName) {
+            this.annoName = annoName;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Annotation: ").append(annoName).append(" at Class: ").append(className);
+            if (fieldName != null && !fieldName.isEmpty()) {
+                sb.append(" at Field: ").append(fieldName);
+            }
+            if (methodName != null && !methodName.isEmpty()) {
+                sb.append(" at Method: ").append(methodName);
+            }
+            return sb.toString();
         }
     }
 }

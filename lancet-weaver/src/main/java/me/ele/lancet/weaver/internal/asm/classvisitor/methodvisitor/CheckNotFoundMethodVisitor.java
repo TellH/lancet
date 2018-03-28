@@ -1,19 +1,21 @@
 package me.ele.lancet.weaver.internal.asm.classvisitor.methodvisitor;
 
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.MethodVisitor;
 
 import me.ele.lancet.base.Scope;
+import me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor;
 import me.ele.lancet.weaver.internal.graph.ClassEntity;
 import me.ele.lancet.weaver.internal.graph.Graph;
 import me.ele.lancet.weaver.internal.graph.MethodEntity;
 import me.ele.lancet.weaver.internal.graph.Node;
-import me.ele.lancet.weaver.internal.log.Log;
 import me.ele.lancet.weaver.internal.util.TypeUtil;
 
-import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckMethodInvokeClassVisitor.MethodCallLocation;
-import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckMethodInvokeClassVisitor.SEPARATOR;
-import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckMethodInvokeClassVisitor.getMethodCache;
-import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckMethodInvokeClassVisitor.shouldCheck;
+import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.*;
+import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.MethodCallLocation;
+import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.SEPARATOR;
+import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.getMethodCache;
+import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.shouldCheck;
 
 /**
  * Created by tlh on 2018/2/13.
@@ -53,6 +55,17 @@ public class CheckNotFoundMethodVisitor extends MethodVisitor {
             }
         }
         super.visitMethodInsn(opcode, owner, name, desc, itf);
+    }
+
+    @Override
+    public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+        if (graph.get(TypeUtil.desc2Name(desc)) == null) {
+            AnnotationLocation location = new AnnotationLocation(TypeUtil.desc2Name(desc));
+            location.className = className;
+            location.methodName = methodName;
+            getNotExistAnnotations().add(location);
+        }
+        return super.visitAnnotation(desc, visible);
     }
 
     private boolean isAbstract(String clazz, String method, String desc) {

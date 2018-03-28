@@ -15,7 +15,7 @@ import java.util.Collections;
 import java.util.List;
 
 import me.ele.lancet.plugin.internal.preprocess.MetaGraphGeneratorImpl;
-import me.ele.lancet.weaver.internal.asm.classvisitor.CheckMethodInvokeClassVisitor;
+import me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor;
 import me.ele.lancet.weaver.internal.graph.ClassEntity;
 
 /**
@@ -35,7 +35,7 @@ public class ExtraCache {
         checkWhiteListFile = new File(dir, "white_list.json");
         classMetas = load();
         whiteList = loadWhiteList();
-        CheckMethodInvokeClassVisitor.initCheckingMethodCLassVisitor(whiteList);
+        CheckReferenceNotExistElementsClassVisitor.initCheckingMethodCLassVisitor(whiteList);
     }
 
     private List<String> loadWhiteList() {

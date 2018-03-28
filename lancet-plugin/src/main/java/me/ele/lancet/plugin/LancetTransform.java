@@ -41,8 +41,9 @@ import me.ele.lancet.plugin.internal.preprocess.PreClassAnalysis;
 import me.ele.lancet.weaver.MetaParser;
 import me.ele.lancet.weaver.Weaver;
 import me.ele.lancet.weaver.internal.AsmWeaver;
-import me.ele.lancet.weaver.internal.asm.classvisitor.CheckMethodInvokeClassVisitor;
-import me.ele.lancet.weaver.internal.asm.classvisitor.CheckMethodInvokeClassVisitor.MethodCallLocation;
+import me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor;
+import me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.AnnotationLocation;
+import me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.MethodCallLocation;
 import me.ele.lancet.weaver.internal.entity.InsertInfo;
 import me.ele.lancet.weaver.internal.entity.ProxyInfo;
 import me.ele.lancet.weaver.internal.entity.TransformInfo;
@@ -54,7 +55,7 @@ import me.ele.lancet.weaver.internal.log.Log;
 import me.ele.lancet.weaver.internal.parser.AsmMetaParser;
 import me.ele.lancet.weaver.spi.SpiModel;
 
-import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckMethodInvokeClassVisitor.SEPARATOR;
+import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.SEPARATOR;
 
 class LancetTransform extends Transform {
 
@@ -194,14 +195,14 @@ class LancetTransform extends Transform {
             }
         }
         if (Util.enableCheckMethodNotFound() && !preClassAnalysis.getExtraCache().classMetas.isEmpty()) {
-            Map<String, MethodCallLocation> methodCache = CheckMethodInvokeClassVisitor.getMethodCache();
+            Map<String, MethodCallLocation> methodCache = CheckReferenceNotExistElementsClassVisitor.getMethodCache();
             Map<String, MethodCallLocation> pendingMethods = methodCache.entrySet().stream()
                     .filter(entry -> !entry.getValue().exist)
                     .filter(entry -> {
                         String[] split = entry.getKey().split(SEPARATOR);
                         String className = split[0];
                         return !checkIfSuperMethodExisted(context.getGraph(), className, split[1], split[2], entry.getValue(), errorLog)
-                                && CheckMethodInvokeClassVisitor.shouldCheck(className);
+                                && CheckReferenceNotExistElementsClassVisitor.shouldCheck(className);
                     })
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             if (!pendingMethods.isEmpty()) {
@@ -212,6 +213,10 @@ class LancetTransform extends Transform {
                             className, split[1], split[2], v.clzLoc, v.methodLoc));
                 });
             }
+            Set<AnnotationLocation> notExistAnnotations = CheckReferenceNotExistElementsClassVisitor.getNotExistAnnotations();
+            if (!notExistAnnotations.isEmpty()) {
+                notExistAnnotations.forEach(e -> errorLog.add(String.format("Annotation: %s not found. \\@ %s \n", e.annoName, e.toString())));
+            }
         }
 
         if (transformInfo.spiModel != null) {
@@ -221,7 +226,7 @@ class LancetTransform extends Transform {
             }
         }
 
-        Log.e("Not Found Methods: " + errorLog.toString());
+        Log.e("Not Found Elements: " + errorLog.toString());
         if (!errorLog.isEmpty() && lancetExtension.isStrictMode()) {
             throw new RuntimeException(errorLog.toString());
         }

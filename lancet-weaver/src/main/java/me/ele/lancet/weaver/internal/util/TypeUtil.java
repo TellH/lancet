@@ -25,6 +25,13 @@ public class TypeUtil {
         return "(" + desc.substring(index + 1);
     }
 
+    public static String desc2Name(String desc) {
+        if (!desc.startsWith("L") && !desc.endsWith(";")) {
+            return desc;
+        }
+        return desc.substring(1, desc.length() - 1);
+    }
+
     public static String descToStatic(int access, String desc, String className) {
         if ((access & Opcodes.ACC_STATIC) == 0) {
             desc = "(L" + className.replace('.', '/') + ";" + desc.substring(1);
@@ -49,15 +56,15 @@ public class TypeUtil {
         return index;
     }
 
-    public static boolean isStatic(int access){
+    public static boolean isStatic(int access) {
         return (access & Opcodes.ACC_STATIC) == Opcodes.ACC_STATIC;
     }
 
-    public static boolean isAbstract(int access){
+    public static boolean isAbstract(int access) {
         return (access & Opcodes.ACC_ABSTRACT) == Opcodes.ACC_ABSTRACT;
     }
 
-    public static boolean isSynthetic(int access){
+    public static boolean isSynthetic(int access) {
         return (access & Opcodes.ACC_SYNTHETIC) == Opcodes.ACC_SYNTHETIC;
     }
 
@@ -69,7 +76,7 @@ public class TypeUtil {
         return (access & Opcodes.ACC_PUBLIC) == Opcodes.ACC_PUBLIC;
     }
 
-    public static int resetAccessScope(int access,int scope){
+    public static int resetAccessScope(int access, int scope) {
         return access & ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED) | scope;
     }
 

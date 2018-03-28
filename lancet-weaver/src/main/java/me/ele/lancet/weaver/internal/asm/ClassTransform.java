@@ -8,7 +8,7 @@ import org.objectweb.asm.tree.MethodNode;
 import java.util.List;
 
 import me.ele.lancet.weaver.ClassData;
-import me.ele.lancet.weaver.internal.asm.classvisitor.CheckMethodInvokeClassVisitor;
+import me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor;
 import me.ele.lancet.weaver.internal.asm.classvisitor.HookClassVisitor;
 import me.ele.lancet.weaver.internal.asm.classvisitor.InsertClassVisitor;
 import me.ele.lancet.weaver.internal.asm.classvisitor.ProxyClassVisitor;
@@ -73,7 +73,7 @@ public class ClassTransform {
 
         // check if Classes and Methods not found
         if (transformInfo.enableCheckMethodNotFound) {
-            cr.accept(new CheckMethodInvokeClassVisitor(graph), ClassReader.SKIP_DEBUG);
+            cr.accept(new CheckReferenceNotExistElementsClassVisitor(graph), ClassReader.SKIP_DEBUG);
         }
         if (transformInfo.spiModel != null) {
             transformInfo.spiModel.recordSpiService(internalName);
