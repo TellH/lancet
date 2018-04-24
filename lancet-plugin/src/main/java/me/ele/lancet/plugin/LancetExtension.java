@@ -16,6 +16,7 @@ public class LancetExtension {
     private boolean checkMethodNotFoundEnable = true;
     private boolean strictMode;
     private SpiExtension spiExtension;
+    private boolean shouldDebugEnableCheck;
 
     public void logLevel(Log.Level level) {
         this.level = Objects.requireNonNull(level, "Log.Level is null");
@@ -106,5 +107,13 @@ public class LancetExtension {
 
     public void setSpiExtension(SpiExtension spiExtension) {
         this.spiExtension = spiExtension;
+    }
+
+    public boolean isShouldDebugEnableCheck() {
+        return shouldDebugEnableCheck;
+    }
+
+    public void setShouldDebugEnableCheck(boolean shouldDebugEnableCheck) {
+        this.shouldDebugEnableCheck = shouldDebugEnableCheck;
     }
 }

@@ -69,13 +69,14 @@ class LancetTransform extends Transform {
         // load the LocalCache from disk
         this.cache = new LocalCache(global.getLancetDir());
 
-        List<String> taskNames = project.getGradle().getStartParameter().getTaskNames();
-        for (int index = 0; index < taskNames.size(); ++index) {
-            String taskName = taskNames.get(index);
-            if (taskName.contains("assemble") || taskName.contains("resguard")) {
-                if (taskName.toLowerCase().endsWith("debug") &&
-                        taskName.toLowerCase().contains("debug")) {
-                    Util.isDebugging = true;
+        if (lancetExtension.isShouldDebugEnableCheck()) {
+            List<String> taskNames = project.getGradle().getStartParameter().getTaskNames();
+            for (int index = 0; index < taskNames.size(); ++index) {
+                String taskName = taskNames.get(index);
+                if (taskName.contains("assemble") || taskName.contains("resguard")) {
+                    if (taskName.toLowerCase().contains("debug")) {
+                        Util.isDebugging = true;
+                    }
                 }
             }
         }
@@ -159,7 +160,7 @@ class LancetTransform extends Transform {
             transformInfo.spiModel = new SpiModel(
                     preClassAnalysis.spiServices,
                     spiExtension.getInjectClassName());
-            parseProguardRulesFile(preClassAnalysis.spiServices);
+//            parseProguardRulesFile(preClassAnalysis.spiServices);
         }
 
         Weaver weaver = AsmWeaver.newInstance(transformInfo, context.getGraph());
@@ -175,7 +176,7 @@ class LancetTransform extends Transform {
         }
         new ContextReader(context).accept(incremental, new TransformProcessor(context, weaver));
         Set<String> errorLog = new HashSet<>();
-        if (lancetExtension.isCheckUselessProxyMethodEnable()) {
+        if (!Util.isDebugging && lancetExtension.isCheckUselessProxyMethodEnable()) {
             List<ProxyInfo> proxyInfoList = transformInfo.proxyInfo;
             proxyInfoList.forEach(info -> {
 //                if (!info.isTargetMethodExist) {
@@ -194,7 +195,7 @@ class LancetTransform extends Transform {
                 });
             }
         }
-        if (Util.enableCheckMethodNotFound() && !preClassAnalysis.getExtraCache().classMetas.isEmpty()) {
+        if (!Util.isDebugging && Util.enableCheckMethodNotFound() && !preClassAnalysis.getExtraCache().classMetas.isEmpty()) {
             Map<String, MethodCallLocation> methodCache = CheckReferenceNotExistElementsClassVisitor.getMethodCache();
             Map<String, MethodCallLocation> pendingMethods = methodCache.entrySet().stream()
                     .filter(entry -> !entry.getValue().exist)
@@ -221,13 +222,13 @@ class LancetTransform extends Transform {
 
         if (transformInfo.spiModel != null) {
             List<String> spiClass = transformInfo.spiModel.getNotExistSpiClass();
-            if (spiClass != null && !spiClass.isEmpty()) {
+            if (!Util.isDebugging && spiClass != null && !spiClass.isEmpty()) {
                 throw new RuntimeException(String.format("Spi Service class not found: %s", spiClass.toString()));
             }
         }
 
         Log.e("Not Found Elements: " + errorLog.toString());
-        if (!errorLog.isEmpty() && lancetExtension.isStrictMode()) {
+        if (!Util.isDebugging && !errorLog.isEmpty() && lancetExtension.isStrictMode()) {
             throw new RuntimeException(errorLog.toString());
         }
 
@@ -237,41 +238,6 @@ class LancetTransform extends Transform {
         cache.saveToLocal();
         Log.i("cache saved");
         Log.i("now: " + System.currentTimeMillis());
-    }
-
-    private void parseProguardRulesFile(Map<String, String> spiServices) throws IOException {
-        if (spiServices == null || spiServices.isEmpty()) {
-            return;
-        }
-        SpiExtension spi = lancetExtension.getSpiExtension();
-        if (spi == null || spi.getProguardFilePath() == null) {
-            return;
-        }
-        File file = global.getFile(spi.getProguardFilePath());
-        if (file == null) {
-            return;
-        }
-        if (file.exists() && file.isFile()) {
-            Set<String> proguardInterfaces = new HashSet<>();
-            Pattern p = Pattern.compile("-keep class \\S* implements (?<classname>[\\w.*]*)");
-            Files.readLines(file, Charset.defaultCharset()).forEach(line -> {
-                line = line.trim();
-                if (!line.startsWith("#")) { // 注释不理
-                    Matcher matcher = p.matcher(line);
-                    if (matcher.find()) {
-                        proguardInterfaces.add(matcher.group("classname"));
-                    }
-                }
-            });
-            List<String> proguardNotFoundList = spiServices.keySet().stream()
-                    .filter(i -> !proguardInterfaces.contains(i))
-                    .map(i -> String.format("SPI Interface %s should be added to proguard-rules.pro. Reference: \n" +
-                            "-keep class * implements %s { *; }\n", i, i))
-                    .collect(Collectors.toList());
-            if (proguardNotFoundList != null && !proguardNotFoundList.isEmpty()) {
-                throw new RuntimeException(proguardNotFoundList.toString());
-            }
-        }
     }
 
     private void fetchSpiServicesFiles(PreClassAnalysis preClassAnalysis) throws IOException {
