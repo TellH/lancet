@@ -69,17 +69,21 @@ class LancetTransform extends Transform {
         // load the LocalCache from disk
         this.cache = new LocalCache(global.getLancetDir());
 
-        if (lancetExtension.isShouldDebugEnableCheck()) {
-            List<String> taskNames = project.getGradle().getStartParameter().getTaskNames();
-            for (int index = 0; index < taskNames.size(); ++index) {
-                String taskName = taskNames.get(index);
-                if (taskName.contains("assemble") || taskName.contains("resguard")) {
-                    if (taskName.toLowerCase().contains("debug")) {
+        List<String> taskNames = project.getGradle().getStartParameter().getTaskNames();
+        Log.d("tasks:" + taskNames.toString());
+        System.out.println("tasks:" + taskNames.toString());
+        for (int index = 0; index < taskNames.size(); ++index) {
+            String taskName = taskNames.get(index);
+            if (taskName.contains("assemble") || taskName.contains("resguard")) {
+                if (taskName.toLowerCase().contains("debug")) {
+                    if (!lancetExtension.isShouldDebugEnableCheck()) {
                         Util.isDebugging = true;
                     }
                 }
             }
         }
+        Log.d("isDebugging: " + Util.isDebugging);
+        System.out.println("isDebugging: " + Util.isDebugging);
     }
 
     @Override
@@ -215,7 +219,7 @@ class LancetTransform extends Transform {
                 });
             }
             Set<AnnotationLocation> notExistAnnotations = CheckReferenceNotExistElementsClassVisitor.getNotExistAnnotations();
-            if (!notExistAnnotations.isEmpty()) {
+            if (lancetExtension.isCheckAnnotationNotFoundEnable() && !notExistAnnotations.isEmpty()) {
                 notExistAnnotations.forEach(e -> errorLog.add(String.format("Annotation: %s not found. \\@ %s \n", e.annoName, e.toString())));
             }
         }

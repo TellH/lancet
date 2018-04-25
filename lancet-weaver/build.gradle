@@ -1,5 +1,5 @@
-group 'me.ele'
-version '0.3'
+group "$upload_group"
+version "$upload_version"
 apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'bintray-release'
@@ -31,9 +31,9 @@ uploadArchives {
     repositories {
         mavenDeployer {
             //设置插件的GAV参数
-            pom.groupId = 'me.ele'
+            pom.groupId = "$upload_group"
             pom.artifactId = 'lancet-weaver'
-            pom.version = 0.3
+            pom.version = "$upload_version"
             //文件发布到下面目录
             repository(url: uri('../gradle_plugins'))
         }

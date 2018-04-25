@@ -11,7 +11,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:2.3.2'
-        classpath 'me.ele:lancet-plugin:0.3'
+        classpath 'com.tellh.me.ele:lancet-plugin:1.0.6.7'
     }
 
 //    tasks.withType(JavaCompile) {

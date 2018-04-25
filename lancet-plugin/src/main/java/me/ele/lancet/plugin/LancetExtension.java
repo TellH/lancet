@@ -14,6 +14,7 @@ public class LancetExtension {
     private boolean incremental = true;
     private boolean checkUselessProxyMethodEnable = false;
     private boolean checkMethodNotFoundEnable = true;
+    private boolean checkAnnotationNotFoundEnable = false;
     private boolean strictMode;
     private SpiExtension spiExtension;
     private boolean shouldDebugEnableCheck;
@@ -115,5 +116,13 @@ public class LancetExtension {
 
     public void setShouldDebugEnableCheck(boolean shouldDebugEnableCheck) {
         this.shouldDebugEnableCheck = shouldDebugEnableCheck;
+    }
+
+    public boolean isCheckAnnotationNotFoundEnable() {
+        return checkAnnotationNotFoundEnable;
+    }
+
+    public void setCheckAnnotationNotFoundEnable(boolean checkAnnotationNotFoundEnable) {
+        this.checkAnnotationNotFoundEnable = checkAnnotationNotFoundEnable;
     }
 }
