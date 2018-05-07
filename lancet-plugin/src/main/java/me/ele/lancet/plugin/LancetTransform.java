@@ -51,6 +51,13 @@ class LancetTransform extends Transform {
         // load the LocalCache from disk
         this.cache = new LocalCache(global.getLancetDir());
 
+        this.checkSpi(project);
+    }
+
+    private void checkSpi(Project project) {
+        if (project.getGradle() == null) {
+            return;
+        }
         List<String> taskNames = project.getGradle().getStartParameter().getTaskNames();
         Log.d("tasks:" + taskNames.toString());
         System.out.println("tasks:" + taskNames.toString());
@@ -72,7 +79,6 @@ class LancetTransform extends Transform {
     public String getName() {
         return "lancet";
     }
-
 
     @Override
     public Set<QualifiedContent.ContentType> getInputTypes() {
@@ -238,6 +244,9 @@ class LancetTransform extends Transform {
 
     private void fetchSpiServicesFiles(PreClassAnalysis preClassAnalysis) throws IOException {
         SpiExtension spi = lancetExtension.getSpiExtension();
+        if (spi == null) {
+            return;
+        }
         String[] spiServiceDirs = spi.getSpiServiceDirs();
         if (spiServiceDirs == null || spiServiceDirs.length == 0) {
             return;
