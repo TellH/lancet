@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+##############################################################################
+##
+##  biu biu biu ~~
+##  如果版本号导致无法编译，先在settings.gradle 注释掉测试工程， sync后重新执行
+##
+##############################################################################
+
+rm -r -f ../gradle_plugins
+
+#./gradlew clean
+
+./gradlew :lancet-base:clean
+./gradlew :lancet-plugin:clean
+./gradlew :lancet-weaver:clean
+
+./gradlew :lancet-base:build
+./gradlew :lancet-base:uploadArchives
+
+./gradlew :lancet-plugin:build
+./gradlew :lancet-plugin:uploadArchives
+
+./gradlew :lancet-weaver:build
+./gradlew :lancet-weaver:uploadArchives

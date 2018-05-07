@@ -5,6 +5,9 @@ buildscript {
         Properties properties = new Properties()
         properties.load(project.rootProject.file('local.properties').newDataInputStream())
 
+        Properties gradleProperties = new Properties()
+        gradleProperties.load(project.rootProject.file('gradle.properties').newDataInputStream())
+
         ele = true
         ele = "true" == properties.getProperty("ele")
         ele = false
@@ -22,7 +25,7 @@ buildscript {
         guava_version = '20.0'
 
         upload_group = 'com.tellh.me.ele'
-        upload_version = '1.0.6.9'
+        upload_version = gradleProperties.getProperty("upload_version")
     }
     repositories {
         jcenter()

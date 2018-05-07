@@ -1,5 +1,5 @@
 include ':lancet-base', ':lancet-weaver', ':lancet-plugin'
-include ':testapp', ':testlib'
-include ':sample-test'
+//include ':testapp', ':testlib'
+//include ':sample-test'
 rootProject.name = "Lancet"
 
