@@ -156,7 +156,7 @@ class LancetTransform extends Transform {
         }
 
         GlobalProxyExtension globalProxyExtension = lancetExtension.getGlobalProxyExtension();
-        if (globalProxyExtension != null) {
+        if (globalProxyExtension != null && globalProxyExtension.getGlobalProxyClassName() != null) {
             ExternalProxyModel externalProxyModel = new ExternalProxyModel(globalProxyExtension.getGlobalProxyClassName());
             transformInfo.externalProxyModel = externalProxyModel;
         } else {

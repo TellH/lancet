@@ -30,16 +30,16 @@ public class HookInfoGnenerator {
         classReader.accept(new ClassVisitor(Opcodes.ASM5) {
             @Override
             public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-                if (name.equals("<init>")){
+                if (name.equals("<init>")) {
                     return super.visitMethod(access, name, desc, signature, exceptions);
                 }
                 MethodNode node = new MethodNode(access, name, desc, signature, exceptions);
                 hookNode.add(node);
-                return new MethodVisitor(Opcodes.ASM5,node) {
+                return new MethodVisitor(Opcodes.ASM5, node) {
 
                     @Override
                     public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-                        if (owner.equals("com/sample/hook/Origin")){
+                        if (owner.equals("com/sample/hook/Origin")) {
                             opcode = AopMethodAdjuster.OP_CALL;
                         }
                         super.visitMethodInsn(opcode, owner, name, desc, itf);
@@ -48,7 +48,7 @@ public class HookInfoGnenerator {
                 };
             }
 
-        },0);
+        }, 0);
         return hookNode;
     }
 
@@ -56,11 +56,11 @@ public class HookInfoGnenerator {
         List<ProxyInfo> infos = new ArrayList<>();
         for (MethodNode node : methodNodeList(className)) {
             String targetDesc = node.desc;
-            if ((node.access & Opcodes.ACC_STATIC) == 0){
+            if ((node.access & Opcodes.ACC_STATIC) == 0) {
                 targetDesc = TypeUtil.removeFirstParam(targetDesc);
             }
             AnnotationNode annotationNode = (AnnotationNode) node.visibleAnnotations.get(0);
-            infos.add(new ProxyInfo("",(String)annotationNode.values.get(1),node.name,targetDesc,className,node));
+            infos.add(new ProxyInfo("", (String) annotationNode.values.get(1), node.name, targetDesc, className, node));
         }
         return infos;
     }
@@ -69,15 +69,15 @@ public class HookInfoGnenerator {
         List<InsertInfo> infos = new ArrayList<>();
         for (MethodNode node : methodNodeList(className)) {
             String targetDesc = node.desc;
-            if ((node.access & Opcodes.ACC_STATIC) == 0){
+            if ((node.access & Opcodes.ACC_STATIC) == 0) {
                 targetDesc = TypeUtil.removeFirstParam(targetDesc);
             }
             AnnotationNode annotationNode = (AnnotationNode) node.visibleAnnotations.get(0);
             boolean createSuper = false;
-            if (annotationNode.values.size() > 2){
+            if (annotationNode.values.size() > 2) {
                 createSuper = (Boolean) annotationNode.values.get(3);
             }
-            infos.add(new InsertInfo(createSuper,(String)annotationNode.values.get(1),node.name,targetDesc,className,node));
+            infos.add(new InsertInfo(createSuper, (String) annotationNode.values.get(1), node.name, targetDesc, className, node));
         }
         return infos;
     }

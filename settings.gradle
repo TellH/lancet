@@ -1,4 +1,5 @@
-include ':lancet-base', ':lancet-weaver', ':lancet-plugin'/*,':testapp', ':testlib'*///, ':sample-test'//, ':lancet-processor', ':lancet-parser'
-//include ':testsample'
+include ':lancet-base', ':lancet-weaver', ':lancet-plugin'
+include ':testapp', ':testlib'
+include ':sample-test'
 rootProject.name = "Lancet"
 
