@@ -9,6 +9,7 @@ import java.io.File;
 import java.util.Objects;
 
 public class LancetExtension {
+
     private Log.Level level = Log.Level.INFO;
     private String fileName = null;
     private boolean incremental = true;
@@ -18,6 +19,7 @@ public class LancetExtension {
     private boolean strictMode;
     private SpiExtension spiExtension;
     private boolean shouldDebugEnableCheck;
+    private GlobalProxyExtension globalProxy;
 
     public void logLevel(Log.Level level) {
         this.level = Objects.requireNonNull(level, "Log.Level is null");
@@ -108,6 +110,14 @@ public class LancetExtension {
 
     public void setSpiExtension(SpiExtension spiExtension) {
         this.spiExtension = spiExtension;
+    }
+
+    public GlobalProxyExtension getGlobalProxyExtension() {
+        return globalProxy;
+    }
+
+    public void setGlobalProxyExtension(GlobalProxyExtension globalProxyExtension) {
+        this.globalProxy = globalProxyExtension;
     }
 
     public boolean isShouldDebugEnableCheck() {

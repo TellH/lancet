@@ -1,22 +1,18 @@
 package me.ele.lancet.weaver.internal.asm;
 
+import me.ele.lancet.weaver.ClassData;
+import me.ele.lancet.weaver.internal.asm.classvisitor.*;
+import me.ele.lancet.weaver.internal.entity.InsertInfo;
+import me.ele.lancet.weaver.internal.entity.TransformInfo;
+import me.ele.lancet.weaver.internal.global.GlobalProxyClassVisitor;
+import me.ele.lancet.weaver.internal.graph.Graph;
+import me.ele.lancet.weaver.spi.SpiClassVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.List;
-
-import me.ele.lancet.weaver.ClassData;
-import me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor;
-import me.ele.lancet.weaver.internal.asm.classvisitor.HookClassVisitor;
-import me.ele.lancet.weaver.internal.asm.classvisitor.InsertClassVisitor;
-import me.ele.lancet.weaver.internal.asm.classvisitor.ProxyClassVisitor;
-import me.ele.lancet.weaver.internal.asm.classvisitor.TryCatchInfoClassVisitor;
-import me.ele.lancet.weaver.internal.entity.InsertInfo;
-import me.ele.lancet.weaver.internal.entity.TransformInfo;
-import me.ele.lancet.weaver.internal.graph.Graph;
-import me.ele.lancet.weaver.spi.SpiClassVisitor;
 
 /**
  * Created by Jude on 2017/4/25.
@@ -37,7 +33,11 @@ public class ClassTransform {
 
         ClassTransform transform = new ClassTransform(classCollector, context);
         transform.connect(new HookClassVisitor(transformInfo.hookClasses));
-        transform.connect(new ProxyClassVisitor(transformInfo.proxyInfo));
+        if (transformInfo.externalProxyModel == null) {
+            transform.connect(new ProxyClassVisitor(transformInfo.proxyInfo));
+        } else {
+            transform.connect(new GlobalProxyClassVisitor(transformInfo.proxyInfo, transformInfo.externalProxyModel));
+        }
         transform.connect(new InsertClassVisitor(transformInfo.executeInfo));
         transform.connect(new TryCatchInfoClassVisitor(transformInfo.tryCatchInfo));
         if (transformInfo.spiModel != null && internalName.equals(transformInfo.spiModel.getInjectClassName())) {
