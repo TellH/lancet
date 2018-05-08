@@ -9,7 +9,9 @@
 ##
 ##############################################################################
 
-echo "uploadToNexus=true" > upload.properties
+rm -rf ./gradle_plugins
+
+echo "uploadToNexus=false" > upload.properties
 
 ./gradlew :lancet-base:clean
 ./gradlew :lancet-base:build

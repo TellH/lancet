@@ -8,6 +8,12 @@ buildscript {
         Properties gradleProperties = new Properties()
         gradleProperties.load(project.rootProject.file('gradle.properties').newDataInputStream())
 
+        Properties uploadProperties = new Properties()
+        try {
+            uploadProperties.load(project.rootProject.file('upload.properties').newDataInputStream())
+        } catch (e) {
+        }
+
         ele = true
         ele = "true" == properties.getProperty("ele")
         ele = false
@@ -23,6 +29,8 @@ buildscript {
         //android_tools_version = '2.4.0-alpha6'
         android_tools_version = '2.3.2'
         guava_version = '20.0'
+
+        uploadToNexus = uploadProperties.getProperty("uploadToNexus")
 
         upload_group = 'com.tellh.me.ele'
         upload_version = gradleProperties.getProperty("upload_version")

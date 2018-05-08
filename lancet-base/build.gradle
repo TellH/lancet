@@ -24,8 +24,13 @@ uploadArchives {
             pom.groupId = "$upload_group"
             pom.artifactId = 'lancet-base'
             pom.version = "$upload_version"
-            //文件发布到下面目录
-            repository(url: uri('../gradle_plugins'))
+            if ("$uploadToNexus" == 'true') {
+                repository(url: uri('http://git.bytedance.com:8081/nexus/content/repositories/ugc_android/')) {
+                    authentication(userName: 'ugc_android', password: 'wer0]fN-7t[jsdcBdfm/')
+                }
+            } else {
+                repository(url: uri('../gradle_plugins'))
+            }
         }
     }
 }
