@@ -91,6 +91,7 @@ public class ClassCollector {
         }
         for (Map.Entry<String, ClassWriter> entry : mGlobalProxyClassWriters.entrySet()) {
             classDataArray[index] = new ClassData(entry.getValue().toByteArray(), entry.getKey());
+            classDataArray[index].setGlobalClass(true);
             index++;
         }
         classDataArray[index] = new ClassData(originClassWriter.toByteArray(), originClassName);

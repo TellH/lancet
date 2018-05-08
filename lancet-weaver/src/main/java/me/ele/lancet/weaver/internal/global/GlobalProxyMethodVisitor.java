@@ -68,6 +68,8 @@ public class GlobalProxyMethodVisitor extends MethodVisitor {
                 if (!externalProxyModel.includedMethod(methodName)) {
                     externalProxyModel.addMethodIfNotIncluded(methodName);
                     chain.next(artificialClassname, Opcodes.ACC_STATIC, methodName, staticDesc, c.threadLocalNode(), cv);
+                } else {
+                    chain.headFromInsert(Opcodes.ACC_STATIC, artificialClassname, methodName, staticDesc);
                 }
             });
 
