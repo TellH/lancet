@@ -67,9 +67,9 @@ public class GlobalProxyMethodVisitor extends MethodVisitor {
                 String methodName = c.sourceClass.replace("/", "_") + "_" + c.sourceMethod.name;
                 if (!externalProxyModel.includedMethod(methodName)) {
                     externalProxyModel.addMethodIfNotIncluded(methodName);
-                    chain.next(artificialClassname, Opcodes.ACC_STATIC, methodName, staticDesc, c.threadLocalNode(), cv);
+                    chain.next(artificialClassname, Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, methodName, staticDesc, c.threadLocalNode(), cv);
                 } else {
-                    chain.headFromInsert(Opcodes.ACC_STATIC, artificialClassname, methodName, staticDesc);
+                    chain.headFromInsert(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, artificialClassname, methodName, staticDesc);
                 }
             });
 
