@@ -19,26 +19,28 @@ public class ProxyInfo {
     public String targetDesc;
     public String sourceClass;
     public MethodNode sourceMethod;
+    public final boolean globalProxyClass;
 
     public Pattern pattern;
 
     public boolean isTargetMethodExist;
     public boolean isEffective;
 
-    private ThreadLocal<MethodNode> local = new ThreadLocal<MethodNode>(){
+    private ThreadLocal<MethodNode> local = new ThreadLocal<MethodNode>() {
         @Override
         synchronized protected MethodNode initialValue() {
             return AsmUtil.clone(sourceMethod);
         }
     };
 
-    public ProxyInfo(String regex, String targetClass, String targetMethod, String targetDesc, String sourceClass, MethodNode sourceMethod) {
+    public ProxyInfo(String regex, String targetClass, String targetMethod, String targetDesc, String sourceClass, MethodNode sourceMethod, boolean globalProxyClass) {
         this.regex = regex;
         this.targetClass = targetClass;
         this.targetMethod = targetMethod;
         this.targetDesc = targetDesc;
         this.sourceClass = sourceClass;
         this.sourceMethod = sourceMethod;
+        this.globalProxyClass = globalProxyClass;
 
         if (!Strings.isNullOrEmpty(regex)) {
             this.pattern = Pattern.compile(regex);
@@ -55,7 +57,6 @@ public class ProxyInfo {
         return pattern == null || pattern.matcher(className).matches();
     }
 
-
     @Override
     public String toString() {
         return "ProxyInfo{" +
@@ -68,6 +69,7 @@ public class ProxyInfo {
                 ", sourceMethod.signature=" + sourceMethod.signature +
                 ", sourceMethod.access=" + sourceMethod.access +
                 ", sourceMethod.codeSize=" + sourceMethod.instructions.size() +
+                ", sourceMethod.globalProxyClass=" + globalProxyClass +
                 '}';
     }
 

@@ -1,6 +1,7 @@
 package me.ele.lancet.weaver.internal.asm.classvisitor.methodvisitor;
 
 import me.ele.lancet.weaver.internal.asm.MethodChain;
+import me.ele.lancet.weaver.internal.global.ExternalProxyModel;
 import me.ele.lancet.weaver.internal.util.TypeUtil;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -25,8 +26,9 @@ public class ProxyMethodVisitor extends MethodVisitor {
     private final String name;
     private final ClassCollector classCollector;
     private final MethodChain chain;
+    private final ExternalProxyModel externalProxyModel;
 
-    public ProxyMethodVisitor(MethodChain chain, MethodVisitor mv, Map<String, MethodChain.Invoker> invokerMap, Map<String, List<ProxyInfo>> matchMap, String className, String name, ClassCollector classCollector) {
+    public ProxyMethodVisitor(MethodChain chain, MethodVisitor mv, Map<String, MethodChain.Invoker> invokerMap, Map<String, List<ProxyInfo>> matchMap, String className, String name, ClassCollector classCollector, ExternalProxyModel externalProxyModel) {
         super(Opcodes.ASM5, mv);
         this.chain = chain;
         this.invokerMap = invokerMap;
@@ -34,6 +36,10 @@ public class ProxyMethodVisitor extends MethodVisitor {
         this.className = className;
         this.name = name;
         this.classCollector = classCollector;
+        this.externalProxyModel = externalProxyModel;
+        if (externalProxyModel == null) {
+            throw new NullPointerException("ExternalProxyModel can't be null!");
+        }
     }
 
     @Override
@@ -49,9 +55,6 @@ public class ProxyMethodVisitor extends MethodVisitor {
             // begin hook this code.
             chain.headFromProxy(opcode, owner, name, desc);
 
-            String artificialClassname = classCollector.getCanonicalName(ClassTransform.AID_INNER_CLASS_NAME);
-            ClassVisitor cv = classCollector.getInnerClassVisitor(ClassTransform.AID_INNER_CLASS_NAME);
-
             Log.tag("transform").i("start weave Call method " + " for " + owner + "." + name + desc +
                     " in " + className + "." + this.name);
 
@@ -63,8 +66,24 @@ public class ProxyMethodVisitor extends MethodVisitor {
                 Log.tag("transform").i(
                         " from " + c.sourceClass + "." + c.sourceMethod.name);
 
-                String methodName = c.sourceClass.replace("/", "_") + "_" + c.sourceMethod.name;
-                chain.next(artificialClassname, Opcodes.ACC_STATIC, methodName, staticDesc, c.threadLocalNode(), cv);
+                if(c.globalProxyClass) {
+                    String artificialClassname = externalProxyModel.getGlobalProxyClassName();
+                    ClassVisitor cv = classCollector.getGlobalProxyClassVisitor(artificialClassname, externalProxyModel);
+
+                    String methodName = c.sourceClass.replace("/", "_") + "_" + c.sourceMethod.name;
+                    if (!externalProxyModel.includedMethod(methodName)) {
+                        externalProxyModel.addMethodIfNotIncluded(methodName);
+                        chain.next(artificialClassname, Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, methodName, staticDesc, c.threadLocalNode(), cv);
+                    } else {
+                        chain.headFromInsert(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, artificialClassname, methodName, staticDesc);
+                    }
+                } else {
+                    String artificialClassname = classCollector.getCanonicalName(ClassTransform.AID_INNER_CLASS_NAME);
+                    ClassVisitor cv = classCollector.getInnerClassVisitor(ClassTransform.AID_INNER_CLASS_NAME);
+
+                    String methodName = c.sourceClass.replace("/", "_") + "_" + c.sourceMethod.name;
+                    chain.next(artificialClassname, Opcodes.ACC_STATIC, methodName, staticDesc, c.threadLocalNode(), cv);
+                }
             });
 
             invokerMap.put(key, chain.getHead());

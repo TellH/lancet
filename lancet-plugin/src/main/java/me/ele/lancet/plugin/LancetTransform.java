@@ -155,15 +155,12 @@ class LancetTransform extends Transform {
 //            parseProguardRulesFile(preClassAnalysis.spiServices);
         }
 
+        String globalProxyClassName = "";
         GlobalProxyExtension globalProxyExtension = lancetExtension.getGlobalProxyExtension();
         if (globalProxyExtension != null && globalProxyExtension.getGlobalProxyClassName() != null) {
-            ExternalProxyModel externalProxyModel = new ExternalProxyModel(globalProxyExtension.getGlobalProxyClassName());
-            transformInfo.externalProxyModel = externalProxyModel;
-        } else {
-            // java test code
-//            ExternalProxyModel externalProxyModel = new ExternalProxyModel("");
-//            transformInfo.externalProxyModel = externalProxyModel;
+            globalProxyClassName = globalProxyExtension.getGlobalProxyClassName();
         }
+        transformInfo.externalProxyModel = new ExternalProxyModel(globalProxyClassName);
 
         Weaver weaver = AsmWeaver.newInstance(transformInfo, context.getGraph());
         Map<String, List<InsertInfo>> executeInfoBak = new HashMap<>();

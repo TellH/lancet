@@ -33,11 +33,7 @@ public class ClassTransform {
 
         ClassTransform transform = new ClassTransform(classCollector, context);
         transform.connect(new HookClassVisitor(transformInfo.hookClasses));
-        if (transformInfo.externalProxyModel == null) {
-            transform.connect(new ProxyClassVisitor(transformInfo.proxyInfo));
-        } else {
-            transform.connect(new GlobalProxyClassVisitor(transformInfo.proxyInfo, transformInfo.externalProxyModel));
-        }
+        transform.connect(new ProxyClassVisitor(transformInfo.proxyInfo, transformInfo.externalProxyModel));
         transform.connect(new InsertClassVisitor(transformInfo.executeInfo));
         transform.connect(new TryCatchInfoClassVisitor(transformInfo.tryCatchInfo));
         if (transformInfo.spiModel != null && internalName.equals(transformInfo.spiModel.getInjectClassName())) {

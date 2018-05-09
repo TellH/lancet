@@ -12,4 +12,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface Proxy {
     String value();
+
+    boolean globalProxyClass() default false;
 }

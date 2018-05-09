@@ -53,6 +53,7 @@ public class HookInfoLocator {
     private String flowClassName;
     private final Graph graph;
     private boolean shouldIgnoreCheck;
+    private boolean globalProxyClass;
 
     public HookInfoLocator(Graph graph) {
         this.graph = graph;
@@ -91,9 +92,10 @@ public class HookInfoLocator {
         this.shouldIgnoreCheck = shouldIgnoreCheck;
     }
 
-    public void setProxy(String targetMethod) {
+    public void setProxy(String targetMethod, boolean globalProxyClass) {
         this.flag |= PROXY;
         this.targetMethod = targetMethod;
+        this.globalProxyClass = globalProxyClass;
         if (flowClassName != null) {
             this.graph.flow()
                     .exactlyMatch(flowClassName);
@@ -128,7 +130,7 @@ public class HookInfoLocator {
                 break;
             case PROXY:
                 classes.stream()
-                        .map(c -> new ProxyInfo(nameRegex, c, targetMethod, targetDesc, sourceClass, sourceNode))
+                        .map(c -> new ProxyInfo(nameRegex, c, targetMethod, targetDesc, sourceClass, sourceNode, globalProxyClass))
                         .forEach(transformInfo::addProxyInfo);
                 break;
             case TRY_CATCH:

@@ -1,6 +1,7 @@
 package me.ele.lancet.weaver.internal.asm.classvisitor;
 
 import me.ele.lancet.weaver.internal.asm.MethodChain;
+import me.ele.lancet.weaver.internal.global.ExternalProxyModel;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.HashMap;
@@ -20,8 +21,11 @@ public class ProxyClassVisitor extends LinkedClassVisitor {
     private List<ProxyInfo> infos;
     private Map<String, List<ProxyInfo>> matches;
     private Map<String, MethodChain.Invoker> maps = new HashMap<>();
-    public ProxyClassVisitor(List<ProxyInfo> infos) {
+    private ExternalProxyModel externalProxyModel;
+
+    public ProxyClassVisitor(List<ProxyInfo> infos, ExternalProxyModel externalProxyModel) {
         this.infos = infos;
+        this.externalProxyModel = externalProxyModel;
     }
 
     @Override
@@ -37,7 +41,7 @@ public class ProxyClassVisitor extends LinkedClassVisitor {
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
         if (matches.size() > 0) {
-            mv = new ProxyMethodVisitor(getContext().getChain(), mv, maps, matches, getContext().name, name, getClassCollector());
+            mv = new ProxyMethodVisitor(getContext().getChain(), mv, maps, matches, getContext().name, name, getClassCollector(), externalProxyModel);
         }
         List<ProxyInfo> proxyInfos = matches.get(getContext().name + " " + name + " " + desc);
         if (proxyInfos != null && proxyInfos.size() > 0) {
