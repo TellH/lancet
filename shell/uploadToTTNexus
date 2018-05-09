@@ -10,16 +10,16 @@
 ##############################################################################
 
 echo "uploadToNexus=true" > upload.properties
+echo "isExcludeTestProject=true" >> upload.properties
 
-./gradlew :lancet-base:clean
+./gradlew clean
+
 ./gradlew :lancet-base:build
 ./gradlew :lancet-base:uploadArchives
 
-./gradlew :lancet-weaver:clean
 ./gradlew :lancet-weaver:build
 ./gradlew :lancet-weaver:uploadArchives
 
-./gradlew :lancet-plugin:clean
 ./gradlew :lancet-plugin:build
 ./gradlew :lancet-plugin:uploadArchives
 

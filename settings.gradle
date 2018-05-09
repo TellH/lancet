@@ -1,5 +1,22 @@
 include ':lancet-base', ':lancet-weaver', ':lancet-plugin'
-//include ':testapp', ':testlib'
-//include ':sample-test'
+
+def isExcludeTestProject = true
+def proFile = file("./upload.properties")
+if (proFile != null) {
+    Properties p = new Properties()
+    try {
+        proFile.withInputStream { stream ->
+            p.load(stream)
+        }
+        isExcludeTestProject = p.isExcludeTestProject
+    } catch (e) {
+    }
+}
+
+if (isExcludeTestProject == 'true') {
+} else {
+    include ':testapp', ':testlib'
+    include ':sample-test'
+}
 rootProject.name = "Lancet"
 

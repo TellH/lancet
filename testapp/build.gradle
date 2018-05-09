@@ -10,8 +10,8 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.2'
-        classpath 'com.tellh.me.ele:lancet-plugin:1.0.6.9'
+        classpath "com.android.tools.build:gradle:2.3.2"
+        classpath "com.tellh.me.ele:lancet-plugin:${upload_version}"
     }
 
 //    tasks.withType(JavaCompile) {
