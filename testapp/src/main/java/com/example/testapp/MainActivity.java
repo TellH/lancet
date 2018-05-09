@@ -3,6 +3,8 @@ package com.example.testapp;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import com.example.testapp.proxy.ProxyTest1;
+import com.example.testapp.proxy.ProxyTest2;
 
 import java.util.List;
 import java.util.Map;
@@ -28,6 +30,9 @@ public class MainActivity extends AppCompatActivity {
         list.add("haha");
         list.get(0);
         Log.d(TAG, ConfigLoader.getCLASSES().size() + "");
+
+        ProxyTest1.doTest();
+        ProxyTest2.doTest();
     }
 
     @Override
