@@ -15,10 +15,18 @@ import me.ele.lancet.plugin.AOPBaseTest;
  */
 public class ProxyStaticTest extends AOPBaseTest {
 
-    public static class HookClass{
+    public static class HookClass {
         @TargetClass("com.sample.playground.SugarBox")
         @Proxy("addSugar")
         public static void addSugar(Cup cup, int amount) {
+            System.out.println("InsertStaticTest");
+            amount = 20;
+            Origin.callVoid();
+        }
+
+        @TargetClass("com.sample.playground.SugarBox")
+        @Proxy(value = "addSalt", globalProxyClass = true)
+        public static void addSalt(Cup cup, int amount) {
             System.out.println("InsertStaticTest");
             amount = 20;
             Origin.callVoid();

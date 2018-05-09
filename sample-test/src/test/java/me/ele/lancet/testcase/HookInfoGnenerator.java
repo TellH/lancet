@@ -60,7 +60,11 @@ public class HookInfoGnenerator {
                 targetDesc = TypeUtil.removeFirstParam(targetDesc);
             }
             AnnotationNode annotationNode = (AnnotationNode) node.visibleAnnotations.get(0);
-            infos.add(new ProxyInfo("", (String) annotationNode.values.get(1), node.name, targetDesc, className, node));
+            boolean globalProxyClass = false;
+            if (annotationNode.values.size() > 2) {
+                globalProxyClass = (Boolean) annotationNode.values.get(2);
+            }
+            infos.add(new ProxyInfo("", (String) annotationNode.values.get(1), node.name, targetDesc, className, node, globalProxyClass));
         }
         return infos;
     }
