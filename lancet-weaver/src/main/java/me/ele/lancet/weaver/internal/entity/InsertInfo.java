@@ -14,7 +14,8 @@ public class InsertInfo {
     public String targetDesc;
     public String sourceClass;
     public MethodNode sourceMethod;
-
+    public boolean isTargetMethodExist;
+    public boolean shouldIgoreCheck;
     private ThreadLocal<MethodNode> local = new ThreadLocal<MethodNode>(){
         @Override
         synchronized protected MethodNode initialValue() {
@@ -22,13 +23,15 @@ public class InsertInfo {
         }
     };
 
-    public InsertInfo(boolean createSuper, String targetClass, String targetMethod, String targetDesc, String sourceClass, MethodNode sourceMethod) {
+    public InsertInfo(boolean createSuper, String targetClass, String targetMethod, String targetDesc, String sourceClass, MethodNode sourceMethod, boolean shouldIgnoreCheck) {
         this.createSuper = createSuper;
         this.targetClass = targetClass;
         this.targetMethod = targetMethod;
         this.targetDesc = targetDesc;
         this.sourceClass = sourceClass;
         this.sourceMethod = sourceMethod;
+        this.shouldIgoreCheck = shouldIgnoreCheck;
+        this.isTargetMethodExist = false;
     }
 
     public MethodNode threadLocalNode() {

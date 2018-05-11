@@ -17,25 +17,45 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import me.ele.lancet.plugin.internal.ExtraCache;
 import me.ele.lancet.plugin.internal.GlobalContext;
 import me.ele.lancet.plugin.internal.LocalCache;
-import me.ele.lancet.plugin.internal.preprocess.PreClassAnalysis;
 import me.ele.lancet.plugin.internal.TransformContext;
 import me.ele.lancet.plugin.internal.TransformProcessor;
 import me.ele.lancet.plugin.internal.context.ContextReader;
+import me.ele.lancet.plugin.internal.preprocess.PreClassAnalysis;
 import me.ele.lancet.weaver.MetaParser;
 import me.ele.lancet.weaver.Weaver;
 import me.ele.lancet.weaver.internal.AsmWeaver;
+import me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor;
+import me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.AnnotationLocation;
+import me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.MethodCallLocation;
+import me.ele.lancet.weaver.internal.entity.InsertInfo;
+import me.ele.lancet.weaver.internal.entity.ProxyInfo;
 import me.ele.lancet.weaver.internal.entity.TransformInfo;
+import me.ele.lancet.weaver.internal.graph.Graph;
+import me.ele.lancet.weaver.internal.graph.MethodEntity;
+import me.ele.lancet.weaver.internal.graph.Node;
 import me.ele.lancet.weaver.internal.log.Impl.FileLoggerImpl;
 import me.ele.lancet.weaver.internal.log.Log;
 import me.ele.lancet.weaver.internal.parser.AsmMetaParser;
+import me.ele.lancet.weaver.spi.SpiModel;
+
+import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.SEPARATOR;
 
 class LancetTransform extends Transform {
 
@@ -43,12 +63,27 @@ class LancetTransform extends Transform {
     private final GlobalContext global;
     private LocalCache cache;
 
-
     public LancetTransform(Project project, LancetExtension lancetExtension) {
         this.lancetExtension = lancetExtension;
         this.global = new GlobalContext(project);
         // load the LocalCache from disk
         this.cache = new LocalCache(global.getLancetDir());
+
+        List<String> taskNames = project.getGradle().getStartParameter().getTaskNames();
+        Log.d("tasks:" + taskNames.toString());
+        System.out.println("tasks:" + taskNames.toString());
+        for (int index = 0; index < taskNames.size(); ++index) {
+            String taskName = taskNames.get(index);
+            if (taskName.contains("assemble") || taskName.contains("resguard")) {
+                if (taskName.toLowerCase().contains("debug")) {
+                    if (!lancetExtension.isShouldDebugEnableCheck()) {
+                        Util.isDebugging = true;
+                    }
+                }
+            }
+        }
+        Log.d("isDebugging: " + Util.isDebugging);
+        System.out.println("isDebugging: " + Util.isDebugging);
     }
 
     @Override
@@ -93,6 +128,7 @@ class LancetTransform extends Transform {
 
     @Override
     public void transform(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException {
+        Util.setEnableCheckMethodNotFound(lancetExtension.isCheckMethodNotFoundEnable());
         initLog();
 
         Log.i("start time: " + System.currentTimeMillis());
@@ -104,9 +140,8 @@ class LancetTransform extends Transform {
         Log.i("now: " + System.currentTimeMillis());
 
         boolean incremental = lancetExtension.getIncremental();
-
-        PreClassAnalysis preClassAnalysis = new PreClassAnalysis(cache);
-
+        PreClassAnalysis preClassAnalysis = new PreClassAnalysis(cache, new ExtraCache(global.getLancetExtraDir()));
+        fetchSpiServicesFiles(preClassAnalysis); // 业务模块化的接口配置文件
         incremental = preClassAnalysis.execute(incremental, context);
 
         Log.i("after pre analysis, incremental: " + incremental);
@@ -122,15 +157,129 @@ class LancetTransform extends Transform {
 
         context.getGraph().flow().clear();
         TransformInfo transformInfo = parser.parse(context.getHookClasses(), context.getGraph());
+        transformInfo.enableCheckMethodNotFound = Util.enableCheckMethodNotFound();
+        SpiExtension spiExtension = lancetExtension.getSpiExtension();
+        if (spiExtension != null &&
+                spiExtension.getInjectClassName() != null && spiExtension.getSpiServiceDirs() != null) {
+            transformInfo.spiModel = new SpiModel(
+                    preClassAnalysis.spiServices,
+                    spiExtension.getInjectClassName());
+//            parseProguardRulesFile(preClassAnalysis.spiServices);
+        }
 
         Weaver weaver = AsmWeaver.newInstance(transformInfo, context.getGraph());
+        Map<String, List<InsertInfo>> executeInfoBak = new HashMap<>();
+        if (lancetExtension.isCheckUselessProxyMethodEnable()) {
+            // backup @Insert executeInfo
+            for (String k : transformInfo.executeInfo.keySet()) {
+                List<InsertInfo> infosBak = new ArrayList<>();
+                List<InsertInfo> insertInfos = transformInfo.executeInfo.get(k);
+                infosBak.addAll(insertInfos);
+                executeInfoBak.put(k, infosBak);
+            }
+        }
         new ContextReader(context).accept(incremental, new TransformProcessor(context, weaver));
+        Set<String> errorLog = new HashSet<>();
+        if (!Util.isDebugging && lancetExtension.isCheckUselessProxyMethodEnable()) {
+            List<ProxyInfo> proxyInfoList = transformInfo.proxyInfo;
+            proxyInfoList.forEach(info -> {
+//                if (!info.isTargetMethodExist) {
+//                    errorLog.add(String.format("@Proxy: %s target method is not exist!", info.toString()));
+//                }
+                if (!info.isEffective) {
+                    errorLog.add(String.format("@Proxy: %s is useless!", info.toString()));
+                }
+            });
+            for (String k : executeInfoBak.keySet()) {
+                List<InsertInfo> insertInfos = executeInfoBak.get(k);
+                insertInfos.forEach(info -> {
+                    if (!info.shouldIgoreCheck && !info.isTargetMethodExist) {
+                        errorLog.add(String.format("@Insert: %s target method is not exist!", info.toString()));
+                    }
+                });
+            }
+        }
+        if (!Util.isDebugging && Util.enableCheckMethodNotFound() && !preClassAnalysis.getExtraCache().classMetas.isEmpty()) {
+            Map<String, MethodCallLocation> methodCache = CheckReferenceNotExistElementsClassVisitor.getMethodCache();
+            Map<String, MethodCallLocation> pendingMethods = methodCache.entrySet().stream()
+                    .filter(entry -> !entry.getValue().exist)
+                    .filter(entry -> {
+                        String[] split = entry.getKey().split(SEPARATOR);
+                        String className = split[0];
+                        return !checkIfSuperMethodExisted(context.getGraph(), className, split[1], split[2], entry.getValue(), errorLog)
+                                && CheckReferenceNotExistElementsClassVisitor.shouldCheck(className);
+                    })
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            if (!pendingMethods.isEmpty()) {
+                pendingMethods.forEach((k, v) -> {
+                    String[] split = k.split(SEPARATOR);
+                    String className = split[0];
+                    errorLog.add(String.format("Class: %s, Method: %s, Desc: %s not found. It was called at Class: %s, Method: %s \n",
+                            className, split[1], split[2], v.clzLoc, v.methodLoc));
+                });
+            }
+            Set<AnnotationLocation> notExistAnnotations = CheckReferenceNotExistElementsClassVisitor.getNotExistAnnotations();
+            if (lancetExtension.isCheckAnnotationNotFoundEnable() && !notExistAnnotations.isEmpty()) {
+                notExistAnnotations.forEach(e -> errorLog.add(String.format("Annotation: %s not found. \\@ %s \n", e.annoName, e.toString())));
+            }
+        }
+
+        if (transformInfo.spiModel != null) {
+            List<String> spiClass = transformInfo.spiModel.getNotExistSpiClass();
+            if (!Util.isDebugging && spiClass != null && !spiClass.isEmpty()) {
+                throw new RuntimeException(String.format("Spi Service class not found: %s", spiClass.toString()));
+            }
+        }
+
+        Log.e("Not Found Elements: " + errorLog.toString());
+        if (!Util.isDebugging && !errorLog.isEmpty() && lancetExtension.isStrictMode()) {
+            throw new RuntimeException(errorLog.toString());
+        }
+
         Log.i("build successfully done");
         Log.i("now: " + System.currentTimeMillis());
 
         cache.saveToLocal();
         Log.i("cache saved");
         Log.i("now: " + System.currentTimeMillis());
+    }
+
+    private void fetchSpiServicesFiles(PreClassAnalysis preClassAnalysis) throws IOException {
+        SpiExtension spi = lancetExtension.getSpiExtension();
+        String[] spiServiceDirs = spi.getSpiServiceDirs();
+        if (spiServiceDirs == null || spiServiceDirs.length == 0) {
+            return;
+        }
+        Map<String, String> spiServices = preClassAnalysis.spiServices;
+        for (String path : spiServiceDirs) {
+            File spiServiceDir = global.getFile(path);
+            if (spiServiceDir != null && spiServiceDir.isDirectory()) {
+                for (File f : Files.fileTreeTraverser().preOrderTraversal(spiServiceDir)) {
+                    if (f.isFile() && !f.getName().equalsIgnoreCase(".DS_Store")) {
+                        byte[] data = Files.toByteArray(f);
+                        spiServices.put(f.getName(), new String(data));
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean checkIfSuperMethodExisted(Graph graph, String className, String methodName, String desc, MethodCallLocation value, Set<String> errorLog) {
+        Node node = graph.get(className);
+        if (node == null) {
+            errorLog.add(String.format("Class: %s not found, with Method: %s. It was called at Class: %s, Method: %s \n",
+                    className, methodName, value.clzLoc, value.methodLoc));
+            return false;
+        }
+        Node parent = node.parent;
+        while (parent != null) {
+            for (MethodEntity m : parent.entity.methods) {
+                if (methodName.equals(m.name) && desc.equals(m.desc))
+                    return true;
+            }
+            parent = parent.parent;
+        }
+        return false;
     }
 
     private AsmMetaParser createParser(TransformContext context) {

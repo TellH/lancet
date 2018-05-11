@@ -1,11 +1,15 @@
+group "$upload_group"
+version "$upload_version"
 apply plugin: 'java'
-
+apply plugin: 'bintray-release'
+apply plugin: 'maven'
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile gradleApi()
     compileOnly "com.android.tools.build:gradle:$android_tools_version"
     compile "com.google.code.gson:gson:2.8.0"
     compile project(':lancet-weaver')
+//    compile 'me.ele:lancet-weaver:0.3'
     testCompile gradleTestKit()
     testCompile 'junit:junit:4.12'
 }
@@ -27,4 +31,24 @@ task createClasspathManifest {
 
 dependencies {
     testRuntime files(createClasspathManifest)
+}
+publish {
+    userOrg = 'tellh'//bintray.com用户名
+    groupId = "$upload_group"//jcenter上的路径
+    artifactId = 'lancet-plugin'//项目名称
+    publishVersion = "$upload_version"//版本号
+    desc = 'Add proxy check to lancet '
+    website = 'https://github.com/eleme/lancet'
+}
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            //设置插件的GAV参数
+            pom.groupId = "$upload_group"
+            pom.artifactId = 'lancet-plugin'
+            pom.version = "$upload_version"
+            //文件发布到下面目录
+            repository(url: uri('../gradle_plugins'))
+        }
+    }
 }

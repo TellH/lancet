@@ -2,6 +2,7 @@
 package me.ele.lancet.plugin;
 
 import com.google.common.base.Strings;
+
 import me.ele.lancet.weaver.internal.log.Log;
 
 import java.io.File;
@@ -11,6 +12,12 @@ public class LancetExtension {
     private Log.Level level = Log.Level.INFO;
     private String fileName = null;
     private boolean incremental = true;
+    private boolean checkUselessProxyMethodEnable = false;
+    private boolean checkMethodNotFoundEnable = true;
+    private boolean checkAnnotationNotFoundEnable = false;
+    private boolean strictMode;
+    private SpiExtension spiExtension;
+    private boolean shouldDebugEnableCheck;
 
     public void logLevel(Log.Level level) {
         this.level = Objects.requireNonNull(level, "Log.Level is null");
@@ -69,5 +76,53 @@ public class LancetExtension {
 
     public String getFileName() {
         return fileName;
+    }
+
+    public boolean isCheckUselessProxyMethodEnable() {
+        return checkUselessProxyMethodEnable;
+    }
+
+    public void setCheckUselessProxyMethodEnable(boolean enable) {
+        checkUselessProxyMethodEnable = enable;
+    }
+
+    public boolean isCheckMethodNotFoundEnable() {
+        return checkMethodNotFoundEnable;
+    }
+
+    public void setCheckMethodNotFoundEnable(boolean checkMethodNotFoundEnable) {
+        this.checkMethodNotFoundEnable = checkMethodNotFoundEnable;
+    }
+
+    public void setStrictMode(boolean strictMode) {
+        this.strictMode = strictMode;
+    }
+
+    public boolean isStrictMode() {
+        return strictMode;
+    }
+
+    public SpiExtension getSpiExtension() {
+        return spiExtension;
+    }
+
+    public void setSpiExtension(SpiExtension spiExtension) {
+        this.spiExtension = spiExtension;
+    }
+
+    public boolean isShouldDebugEnableCheck() {
+        return shouldDebugEnableCheck;
+    }
+
+    public void setShouldDebugEnableCheck(boolean shouldDebugEnableCheck) {
+        this.shouldDebugEnableCheck = shouldDebugEnableCheck;
+    }
+
+    public boolean isCheckAnnotationNotFoundEnable() {
+        return checkAnnotationNotFoundEnable;
+    }
+
+    public void setCheckAnnotationNotFoundEnable(boolean checkAnnotationNotFoundEnable) {
+        this.checkAnnotationNotFoundEnable = checkAnnotationNotFoundEnable;
     }
 }

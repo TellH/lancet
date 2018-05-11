@@ -22,6 +22,9 @@ public class ProxyInfo {
 
     public Pattern pattern;
 
+    public boolean isTargetMethodExist;
+    public boolean isEffective;
+
     private ThreadLocal<MethodNode> local = new ThreadLocal<MethodNode>(){
         @Override
         synchronized protected MethodNode initialValue() {
@@ -40,6 +43,8 @@ public class ProxyInfo {
         if (!Strings.isNullOrEmpty(regex)) {
             this.pattern = Pattern.compile(regex);
         }
+        isTargetMethodExist = false;
+        isEffective = false;
     }
 
     public MethodNode threadLocalNode() {
