@@ -14,6 +14,7 @@ public class CoffeeMaker {
     public Cup brew(Cup cup) {
         cup.putCoffee(coffeeBox.getLatte());
         SugarBox.addSugar(cup,10);
+        SugarBox.addSalt(cup,10);
         hand(cup);
         return cup;
     }

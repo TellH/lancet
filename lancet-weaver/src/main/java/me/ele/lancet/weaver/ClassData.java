@@ -7,6 +7,15 @@ package me.ele.lancet.weaver;
 public class ClassData {
     byte[] classBytes;
     String className;
+    boolean isGlobalClass = false;
+
+    public boolean isGlobalClass() {
+        return isGlobalClass;
+    }
+
+    public void setGlobalClass(boolean globalClass) {
+        isGlobalClass = globalClass;
+    }
 
     public ClassData(byte[] classBytes, String className) {
         this.classBytes = classBytes;

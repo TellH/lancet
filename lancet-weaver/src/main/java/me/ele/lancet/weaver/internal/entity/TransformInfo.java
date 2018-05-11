@@ -3,6 +3,7 @@ package me.ele.lancet.weaver.internal.entity;
 
 import java.util.*;
 
+import me.ele.lancet.weaver.internal.global.ExternalProxyModel;
 import me.ele.lancet.weaver.spi.SpiModel;
 
 /**
@@ -23,6 +24,7 @@ public class TransformInfo {
     public Set<String> hookClasses = new HashSet<>();
     public boolean enableCheckMethodNotFound;
     public SpiModel spiModel;
+    public ExternalProxyModel externalProxyModel;
 
     public TransformInfo(List<String> hookClasses) {
         this.hookClasses.addAll(hookClasses);

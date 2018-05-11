@@ -1,9 +1,6 @@
 package me.ele.lancet.plugin;
 
-import com.android.build.gradle.AppExtension;
-
 import com.android.build.gradle.BaseExtension;
-
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.ProjectConfigurationException;
@@ -20,6 +17,7 @@ public class LancetPlugin implements Plugin<Project> {
         BaseExtension baseExtension = (BaseExtension) project.getExtensions().getByName("android");
         LancetExtension lancetExtension = project.getExtensions().create("lancet", LancetExtension.class);
         lancetExtension.setSpiExtension(project.getExtensions().create("spi", SpiExtension.class));
+        lancetExtension.setGlobalProxyExtension(project.getExtensions().create("globalProxy", GlobalProxyExtension.class));
         baseExtension.registerTransform(new LancetTransform(project, lancetExtension));
     }
 }

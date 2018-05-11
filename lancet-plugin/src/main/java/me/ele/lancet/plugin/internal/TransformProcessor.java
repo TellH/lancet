@@ -32,6 +32,9 @@ public class TransformProcessor implements ClassFetcher {
     private final DirectoryRunner dirRunner = new DirectoryRunner();
     private Map<QualifiedContent, JarRunner> map = new ConcurrentHashMap<>();
 
+    // 临时, 我知道挫, 后期修改为 gradle merge code task 处理
+    private File sGlobalFile;
+
     public TransformProcessor(TransformContext context, Weaver weaver) {
         this.context = context;
         this.weaver = weaver;
@@ -86,6 +89,7 @@ public class TransformProcessor implements ClassFetcher {
         }
     }
 
+
     class JarRunner implements Closeable {
 
         private final JarOutputStream jos;
@@ -104,9 +108,15 @@ public class TransformProcessor implements ClassFetcher {
                 jos.write(bytes);
             } else {
                 for (ClassData classData : weaver.weave(bytes, relativePath)) {
-                    ZipEntry entry = new ZipEntry(classData.getClassName() + ".class");
-                    jos.putNextEntry(entry);
-                    jos.write(classData.getClassBytes());
+                    if (classData.isGlobalClass()) {
+                        if (sGlobalFile != null) {
+                            Files.write(classData.getClassBytes(), sGlobalFile);
+                        }
+                    } else {
+                        ZipEntry entry = new ZipEntry(classData.getClassName() + ".class");
+                        jos.putNextEntry(entry);
+                        jos.write(classData.getClassBytes());
+                    }
                 }
             }
         }
@@ -123,6 +133,11 @@ public class TransformProcessor implements ClassFetcher {
                 File target = Util.toSystemDependentFile(relativeRoot, data.getClassName() + ".class");
                 Files.createParentDirs(target);
                 Files.write(data.getClassBytes(), target);
+                if (data.isGlobalClass()) {
+                    if (sGlobalFile == null) {
+                        sGlobalFile = target;
+                    }
+                }
             }
         }
     }

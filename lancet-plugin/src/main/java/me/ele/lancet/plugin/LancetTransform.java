@@ -1,41 +1,11 @@
 package me.ele.lancet.plugin;
 
-import com.android.build.api.transform.QualifiedContent;
-import com.android.build.api.transform.SecondaryFile;
-import com.android.build.api.transform.Transform;
-import com.android.build.api.transform.TransformException;
-import com.android.build.api.transform.TransformInvocation;
+import com.android.build.api.transform.*;
 import com.android.build.gradle.internal.pipeline.TransformManager;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
-
-import org.gradle.api.Project;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import me.ele.lancet.plugin.internal.ExtraCache;
-import me.ele.lancet.plugin.internal.GlobalContext;
-import me.ele.lancet.plugin.internal.LocalCache;
-import me.ele.lancet.plugin.internal.TransformContext;
-import me.ele.lancet.plugin.internal.TransformProcessor;
+import me.ele.lancet.plugin.internal.*;
 import me.ele.lancet.plugin.internal.context.ContextReader;
 import me.ele.lancet.plugin.internal.preprocess.PreClassAnalysis;
 import me.ele.lancet.weaver.MetaParser;
@@ -47,6 +17,7 @@ import me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElem
 import me.ele.lancet.weaver.internal.entity.InsertInfo;
 import me.ele.lancet.weaver.internal.entity.ProxyInfo;
 import me.ele.lancet.weaver.internal.entity.TransformInfo;
+import me.ele.lancet.weaver.internal.global.ExternalProxyModel;
 import me.ele.lancet.weaver.internal.graph.Graph;
 import me.ele.lancet.weaver.internal.graph.MethodEntity;
 import me.ele.lancet.weaver.internal.graph.Node;
@@ -54,6 +25,16 @@ import me.ele.lancet.weaver.internal.log.Impl.FileLoggerImpl;
 import me.ele.lancet.weaver.internal.log.Log;
 import me.ele.lancet.weaver.internal.parser.AsmMetaParser;
 import me.ele.lancet.weaver.spi.SpiModel;
+import org.gradle.api.Project;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.SEPARATOR;
 
@@ -66,9 +47,17 @@ class LancetTransform extends Transform {
     public LancetTransform(Project project, LancetExtension lancetExtension) {
         this.lancetExtension = lancetExtension;
         this.global = new GlobalContext(project);
+
         // load the LocalCache from disk
         this.cache = new LocalCache(global.getLancetDir());
 
+        this.checkSpi(project);
+    }
+
+    private void checkSpi(Project project) {
+        if (project.getGradle() == null) {
+            return;
+        }
         List<String> taskNames = project.getGradle().getStartParameter().getTaskNames();
         Log.d("tasks:" + taskNames.toString());
         System.out.println("tasks:" + taskNames.toString());
@@ -90,7 +79,6 @@ class LancetTransform extends Transform {
     public String getName() {
         return "lancet";
     }
-
 
     @Override
     public Set<QualifiedContent.ContentType> getInputTypes() {
@@ -166,6 +154,13 @@ class LancetTransform extends Transform {
                     spiExtension.getInjectClassName());
 //            parseProguardRulesFile(preClassAnalysis.spiServices);
         }
+
+        String globalProxyClassName = "";
+        GlobalProxyExtension globalProxyExtension = lancetExtension.getGlobalProxyExtension();
+        if (globalProxyExtension != null && globalProxyExtension.getGlobalProxyClassName() != null) {
+            globalProxyClassName = globalProxyExtension.getGlobalProxyClassName();
+        }
+        transformInfo.externalProxyModel = new ExternalProxyModel(globalProxyClassName);
 
         Weaver weaver = AsmWeaver.newInstance(transformInfo, context.getGraph());
         Map<String, List<InsertInfo>> executeInfoBak = new HashMap<>();
@@ -246,6 +241,9 @@ class LancetTransform extends Transform {
 
     private void fetchSpiServicesFiles(PreClassAnalysis preClassAnalysis) throws IOException {
         SpiExtension spi = lancetExtension.getSpiExtension();
+        if (spi == null) {
+            return;
+        }
         String[] spiServiceDirs = spi.getSpiServiceDirs();
         if (spiServiceDirs == null || spiServiceDirs.length == 0) {
             return;

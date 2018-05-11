@@ -10,8 +10,8 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.2'
-        classpath 'com.tellh.me.ele:lancet-plugin:1.0.6.7'
+        classpath "com.android.tools.build:gradle:2.3.2"
+        classpath "com.tellh.me.ele:lancet-plugin:${upload_version}"
     }
 
 //    tasks.withType(JavaCompile) {
@@ -52,8 +52,12 @@ lancet {
     checkUselessProxyMethodEnable true
     strictMode true
     spi {
-        spiServiceDirs "testapp/src/main/resources"
-        injectClassName "com/example/testapp/ConfigLoader"
+//        spiServiceDirs "testapp/src/main/resources"
+//        injectClassName "com/example/testapp/ConfigLoader"
+    }
+
+    globalProxy {
+        globalProxyClassName ""
     }
 }
 

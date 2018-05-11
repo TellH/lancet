@@ -43,6 +43,20 @@ public class AopTest {
         System.out.println("Hook Hello");
     }
 
+    @TargetClass(value = "com.example.testapp.proxy.ProxyBean")
+    @Proxy("test1")
+    public static void test1() {
+        Log.d(TAG, "lancet test1");
+        Origin.callVoid();
+    }
+
+    @TargetClass(value = "com.example.testapp.proxy.ProxyBean")
+    @Proxy(value = "test2", globalProxyClass = true)
+    public static void test2() {
+        Log.d(TAG, "lancet test2");
+        Origin.callVoid();
+    }
+
 //    @TargetClass(value = "com.example.testapp.MainActivity")
 //    @Proxy("sayHelloaa")
 //    private void sayHahaa() {

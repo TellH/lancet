@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+##############################################################################
+##
+##  Upload gradle_plugins to TT Nexus (https://wiki.bytedance.net/pages/viewpage.action?pageId=173661094)
+##  http://git.bytedance.com:8081/#browse/browse/components:ugc_android    （search key : com.tellh.me.ele）
+##  1.修改gradle.properties 版本号
+##  2.执行本脚本，推送到nexus仓库
+##
+##############################################################################
+
+echo "uploadToNexus=false" > upload.properties
+echo "isExcludeTestProject=true" >> upload.properties
+
+rm -rf ./gradle_plugins
+
+./gradlew clean
+
+./gradlew :lancet-base:build
+./gradlew :lancet-base:uploadArchives
+
+./gradlew :lancet-weaver:build
+./gradlew :lancet-weaver:uploadArchives
+
+./gradlew :lancet-plugin:build
+./gradlew :lancet-plugin:uploadArchives
+
+rm -rf ./upload.properties
+
+
+
+

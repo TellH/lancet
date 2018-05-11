@@ -16,12 +16,16 @@ public class InsertInfo {
     public MethodNode sourceMethod;
     public boolean isTargetMethodExist;
     public boolean shouldIgoreCheck;
-    private ThreadLocal<MethodNode> local = new ThreadLocal<MethodNode>(){
+    private ThreadLocal<MethodNode> local = new ThreadLocal<MethodNode>() {
         @Override
         synchronized protected MethodNode initialValue() {
             return AsmUtil.clone(sourceMethod);
         }
     };
+
+    public InsertInfo(boolean createSuper, String targetClass, String targetMethod, String targetDesc, String sourceClass, MethodNode sourceMethod) {
+        this(createSuper, targetClass, targetMethod, targetDesc, sourceClass, sourceMethod, true);
+    }
 
     public InsertInfo(boolean createSuper, String targetClass, String targetMethod, String targetDesc, String sourceClass, MethodNode sourceMethod, boolean shouldIgnoreCheck) {
         this.createSuper = createSuper;
