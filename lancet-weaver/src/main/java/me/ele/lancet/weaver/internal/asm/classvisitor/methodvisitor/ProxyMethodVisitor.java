@@ -67,15 +67,17 @@ public class ProxyMethodVisitor extends MethodVisitor {
                         " from " + c.sourceClass + "." + c.sourceMethod.name);
 
                 if(c.globalProxyClass) {
-                    String artificialClassname = externalProxyModel.getGlobalProxyClassName();
-                    ClassVisitor cv = classCollector.getGlobalProxyClassVisitor(artificialClassname, externalProxyModel);
+                    synchronized (externalProxyModel) {
+                        String artificialClassname = externalProxyModel.getGlobalProxyClassName();
+                        ClassVisitor cv = classCollector.getGlobalProxyClassVisitor(artificialClassname, externalProxyModel);
 
-                    String methodName = c.sourceClass.replace("/", "_") + "_" + c.sourceMethod.name;
-                    if (!externalProxyModel.includedMethod(methodName)) {
-                        externalProxyModel.addMethodIfNotIncluded(methodName);
-                        chain.next(artificialClassname, Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, methodName, staticDesc, c.threadLocalNode(), cv);
-                    } else {
-                        chain.headFromInsert(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, artificialClassname, methodName, staticDesc);
+                        String methodName = c.sourceClass.replace("/", "_") + "_" + c.sourceMethod.name;
+                        if (!externalProxyModel.includedMethod(methodName)) {
+                            externalProxyModel.addMethodIfNotIncluded(methodName);
+                            chain.next(artificialClassname, Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, methodName, staticDesc, c.threadLocalNode(), cv);
+                        } else {
+                            chain.headFromInsert(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, artificialClassname, methodName, staticDesc);
+                        }
                     }
                 } else {
                     String artificialClassname = classCollector.getCanonicalName(ClassTransform.AID_INNER_CLASS_NAME);

@@ -21,7 +21,7 @@ public class ProxyClassVisitor extends LinkedClassVisitor {
     private List<ProxyInfo> infos;
     private Map<String, List<ProxyInfo>> matches;
     private Map<String, MethodChain.Invoker> maps = new HashMap<>();
-    private ExternalProxyModel externalProxyModel;
+    private final ExternalProxyModel externalProxyModel;
 
     public ProxyClassVisitor(List<ProxyInfo> infos, ExternalProxyModel externalProxyModel) {
         this.infos = infos;
