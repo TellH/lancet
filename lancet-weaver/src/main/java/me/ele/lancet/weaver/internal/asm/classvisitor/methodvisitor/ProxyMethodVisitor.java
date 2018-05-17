@@ -27,6 +27,7 @@ public class ProxyMethodVisitor extends MethodVisitor {
     private final ClassCollector classCollector;
     private final MethodChain chain;
     private final ExternalProxyModel externalProxyModel;
+    private static final Object object = new Object();
 
     public ProxyMethodVisitor(MethodChain chain, MethodVisitor mv, Map<String, MethodChain.Invoker> invokerMap, Map<String, List<ProxyInfo>> matchMap, String className, String name, ClassCollector classCollector, ExternalProxyModel externalProxyModel) {
         super(Opcodes.ASM5, mv);
@@ -67,7 +68,7 @@ public class ProxyMethodVisitor extends MethodVisitor {
                         " from " + c.sourceClass + "." + c.sourceMethod.name);
 
                 if(c.globalProxyClass) {
-                    synchronized (externalProxyModel) {
+                    synchronized (object) {
                         String artificialClassname = externalProxyModel.getGlobalProxyClassName();
                         ClassVisitor cv = classCollector.getGlobalProxyClassVisitor(artificialClassname, externalProxyModel);
 
