@@ -25,3 +25,19 @@
 
 ```
  
+ ### 配置示例说明
+ 
+ ```gradle
+ lancet {
+         checkUselessProxyMethodEnable true
+         checkMethodNotFoundEnable true // 检查无用方法检查的开关
+         strictMode true // true直接抛异常中断构建，false在build/lancet目录下输出error log
+         useFileLog "output" // 配置输出log文件名
+         spi {
+             spiServiceDirs "aweme-mt/src/main/resources", "aweme-mt/src/i18n/resources",
+                     "aweme-mt/src/musically/resources"
+             injectClassName "com/ss/android/ugc/aweme/framework/services/ConfigLoader"
+             proguardFilePath "aweme-mt/proguard-rules.pro"
+         }
+     }
+ ```     
