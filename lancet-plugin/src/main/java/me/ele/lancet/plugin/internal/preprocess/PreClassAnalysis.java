@@ -63,7 +63,7 @@ public class PreClassAnalysis {
         Log.d(context.toString());
         long duration = System.currentTimeMillis();
 
-        contextReader = new ContextReader(context);
+        contextReader = new ContextReader(context, null);
 
         if (incremental && context.isIncremental() && !cache.isHookClassModified(context)) {
             // can use incremental

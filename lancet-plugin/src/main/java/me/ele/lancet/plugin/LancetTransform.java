@@ -173,7 +173,7 @@ class LancetTransform extends Transform {
                 executeInfoBak.put(k, infosBak);
             }
         }
-        new ContextReader(context).accept(incremental, new TransformProcessor(context, weaver));
+        new ContextReader(context, transformInfo).accept(incremental, new TransformProcessor(context, weaver));
         Set<String> errorLog = new HashSet<>();
         if (!Util.isDebugging && lancetExtension.isCheckUselessProxyMethodEnable()) {
             List<ProxyInfo> proxyInfoList = transformInfo.proxyInfo;
