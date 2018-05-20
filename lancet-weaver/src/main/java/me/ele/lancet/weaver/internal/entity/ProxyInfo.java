@@ -57,6 +57,10 @@ public class ProxyInfo {
         return pattern == null || pattern.matcher(className).matches();
     }
 
+    public String toTargetMethodString() {
+        return targetClass + targetMethod + targetDesc;
+    }
+
     @Override
     public String toString() {
         return "ProxyInfo{" +

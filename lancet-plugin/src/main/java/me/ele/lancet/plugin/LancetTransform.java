@@ -17,6 +17,7 @@ import me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElem
 import me.ele.lancet.weaver.internal.entity.InsertInfo;
 import me.ele.lancet.weaver.internal.entity.ProxyInfo;
 import me.ele.lancet.weaver.internal.entity.TransformInfo;
+import me.ele.lancet.weaver.internal.exception.ErrorManager;
 import me.ele.lancet.weaver.internal.global.ExternalProxyModel;
 import me.ele.lancet.weaver.internal.graph.Graph;
 import me.ele.lancet.weaver.internal.graph.MethodEntity;
@@ -116,6 +117,9 @@ class LancetTransform extends Transform {
 
     @Override
     public void transform(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException {
+
+        ErrorManager.getInstance().clearErrorSet();
+
         Util.setEnableCheckMethodNotFound(lancetExtension.isCheckMethodNotFoundEnable());
         initLog();
 
@@ -228,7 +232,11 @@ class LancetTransform extends Transform {
 
         Log.e("Not Found Elements: " + errorLog.toString());
         if (!Util.isDebugging && !errorLog.isEmpty() && lancetExtension.isStrictMode()) {
-            throw new RuntimeException(errorLog.toString());
+            throw new RuntimeException(ErrorManager.getInstance().toErrorString() + "\n" + errorLog.toString());
+        }
+
+        if (ErrorManager.getInstance().isHasError()) {
+            throw new InterruptedException(ErrorManager.getInstance().toErrorString());
         }
 
         Log.i("build successfully done");
