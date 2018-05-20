@@ -91,6 +91,7 @@ public class ContextReader {
             }
         }
 
+
         if (transformInfo != null && transformInfo.externalProxyModel != null) {
             ClassWriter classWriter = transformInfo.externalProxyModel.getGlobalProxyExternalClassWriter();
             if (classWriter != null) {
