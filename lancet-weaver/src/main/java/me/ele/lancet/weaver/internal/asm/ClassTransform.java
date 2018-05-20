@@ -4,7 +4,6 @@ import me.ele.lancet.weaver.ClassData;
 import me.ele.lancet.weaver.internal.asm.classvisitor.*;
 import me.ele.lancet.weaver.internal.entity.InsertInfo;
 import me.ele.lancet.weaver.internal.entity.TransformInfo;
-import me.ele.lancet.weaver.internal.global.GlobalProxyClassVisitor;
 import me.ele.lancet.weaver.internal.graph.Graph;
 import me.ele.lancet.weaver.spi.SpiClassVisitor;
 import org.objectweb.asm.ClassReader;

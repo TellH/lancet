@@ -1,6 +1,7 @@
 package me.ele.lancet.weaver.internal.asm.classvisitor.methodvisitor;
 
 import me.ele.lancet.weaver.internal.asm.MethodChain;
+import me.ele.lancet.weaver.internal.exception.ErrorManager;
 import me.ele.lancet.weaver.internal.global.ExternalProxyModel;
 import me.ele.lancet.weaver.internal.util.TypeUtil;
 import org.objectweb.asm.ClassVisitor;
@@ -27,6 +28,7 @@ public class ProxyMethodVisitor extends MethodVisitor {
     private final ClassCollector classCollector;
     private final MethodChain chain;
     private final ExternalProxyModel externalProxyModel;
+    private static final Object sLock = new Object();
 
     public ProxyMethodVisitor(MethodChain chain, MethodVisitor mv, Map<String, MethodChain.Invoker> invokerMap, Map<String, List<ProxyInfo>> matchMap, String className, String name, ClassCollector classCollector, ExternalProxyModel externalProxyModel) {
         super(Opcodes.ASM5, mv);
@@ -60,22 +62,24 @@ public class ProxyMethodVisitor extends MethodVisitor {
 
             infos.forEach(c -> {
                 if (TypeUtil.isStatic(c.sourceMethod.access) != (opcode == Opcodes.INVOKESTATIC)) {
-                    throw new IllegalStateException(c.sourceClass + "." + c.sourceMethod.name + " should have the same " +
-                            "static flag with " + owner + "." + name);
+                    ErrorManager.getInstance().throwException(new IllegalStateException(c.sourceClass + "." + c.sourceMethod.name + " should have the same " +
+                            "static flag with " + owner + "." + name));
                 }
                 Log.tag("transform").i(
-                        " from " + c.sourceClass + "." + c.sourceMethod.name);
+                        " from " + c.sourceClass + "." + c.sourceMethod.name + "  --> " + c.toString());
 
                 if(c.globalProxyClass) {
-                    String artificialClassname = externalProxyModel.getGlobalProxyClassName();
-                    ClassVisitor cv = classCollector.getGlobalProxyClassVisitor(artificialClassname, externalProxyModel);
+                    synchronized (sLock) {
+                        String artificialClassname = externalProxyModel.getGlobalProxyClassName();
+                        ClassVisitor cv = classCollector.getGlobalProxyClassVisitor(artificialClassname, externalProxyModel);
 
-                    String methodName = c.sourceClass.replace("/", "_") + "_" + c.sourceMethod.name;
-                    if (!externalProxyModel.includedMethod(methodName)) {
-                        externalProxyModel.addMethodIfNotIncluded(methodName);
-                        chain.next(artificialClassname, Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, methodName, staticDesc, c.threadLocalNode(), cv);
-                    } else {
-                        chain.headFromInsert(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, artificialClassname, methodName, staticDesc);
+                        String methodName = c.sourceClass.replace("/", "_") + "_" + c.sourceMethod.name;
+                        if (!externalProxyModel.includedMethod(c)) {
+                            externalProxyModel.addMethodIfNotIncluded(c);
+                            chain.next(artificialClassname, Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, methodName, staticDesc, c.threadLocalNode(), cv);
+                        } else {
+                            chain.headFromInsert(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, artificialClassname, methodName, staticDesc);
+                        }
                     }
                 } else {
                     String artificialClassname = classCollector.getCanonicalName(ClassTransform.AID_INNER_CLASS_NAME);

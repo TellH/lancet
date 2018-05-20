@@ -9,10 +9,7 @@ import com.android.build.api.transform.TransformOutputProvider;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import me.ele.lancet.weaver.internal.graph.Graph;
 import me.ele.lancet.weaver.internal.log.Log;
@@ -101,6 +98,14 @@ public class TransformContext {
     public File getRelativeFile(QualifiedContent content) {
         return invocation.getOutputProvider().getContentLocation(content.getName(), content.getContentTypes(), content.getScopes(),
                 (content instanceof JarInput ? Format.JAR : Format.DIRECTORY));
+    }
+
+    public File getGrobalRelativeFile() {
+        HashSet hashSetClass = new HashSet<QualifiedContent.ContentType>();
+        hashSetClass.add(QualifiedContent.DefaultContentType.CLASSES);
+        HashSet hashSetProject = new HashSet<QualifiedContent.ContentType>();
+        hashSetProject.add(QualifiedContent.Scope.PROJECT);
+        return invocation.getOutputProvider().getContentLocation("global", hashSetClass, hashSetProject,Format.DIRECTORY);
     }
 
     public void clear() throws IOException {
