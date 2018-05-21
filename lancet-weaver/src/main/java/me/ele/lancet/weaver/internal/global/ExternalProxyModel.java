@@ -89,7 +89,7 @@ public class ExternalProxyModel {
 //                && m1.signature.equals(m2.signature)) {
 //            return true;
 //        }
- 
+
         if (m1.access == m2.access && str1.equals(str2)) {
             if (m1.name.equals(m2.name)) {
                 return true;
