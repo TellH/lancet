@@ -1,15 +1,12 @@
 package me.ele.lancet.weaver.internal.asm;
 
 
-import me.ele.lancet.weaver.internal.global.ExternalProxyModel;
+import me.ele.lancet.weaver.ClassData;
 import me.ele.lancet.weaver.internal.graph.Graph;
 import org.objectweb.asm.*;
-import org.objectweb.asm.util.CheckClassAdapter;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import me.ele.lancet.weaver.ClassData;
 
 /**
  * Created by Jude on 2017/4/25.
@@ -26,7 +23,6 @@ public class ClassCollector {
 
     // simple name of innerClass
     Map<String, ClassWriter> mClassWriters = new HashMap<>();
-    Map<String, ClassWriter> mGlobalProxyClassWriters = new HashMap<>();
 
     public ClassCollector(ClassReader mClassReader, Graph graph) {
         this.mClassReader = mClassReader;
@@ -54,20 +50,6 @@ public class ClassCollector {
         return writer;
     }
 
-    public ClassVisitor getGlobalProxyClassVisitor(String className, ExternalProxyModel externalProxyModel) {
-        ClassWriter classWriter = externalProxyModel.getGlobalProxyExternalClassWriter();
-        if (classWriter == null) {
-            classWriter = mGlobalProxyClassWriters.get(className);
-            if (classWriter == null) {
-                classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-                initForWriter(classWriter, className, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER);
-            }
-            externalProxyModel.setGlobalProxyExternalClassWriter(classWriter);
-        }
-        mGlobalProxyClassWriters.put(className, classWriter);
-        return classWriter;
-    }
-
     private void initForWriter(ClassVisitor visitor, String className, int opcode) {
         visitor.visit(Opcodes.V1_7, opcode, className, null, "java/lang/Object", null);
         MethodVisitor mv = visitor.visitMethod(Opcodes.ACC_PRIVATE, "<init>", "()V", null, null);
@@ -83,15 +65,10 @@ public class ClassCollector {
         for (String className : mClassWriters.keySet()) {
             originClassWriter.visitInnerClass(getCanonicalName(className), originClassName, className, Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC);
         }
-        ClassData[] classDataArray = new ClassData[mClassWriters.size() + mGlobalProxyClassWriters.size() + 1];
+        ClassData[] classDataArray = new ClassData[mClassWriters.size() + 1];
         int index = 0;
         for (Map.Entry<String, ClassWriter> entry : mClassWriters.entrySet()) {
             classDataArray[index] = new ClassData(entry.getValue().toByteArray(), getCanonicalName(entry.getKey()));
-            index++;
-        }
-        for (Map.Entry<String, ClassWriter> entry : mGlobalProxyClassWriters.entrySet()) {
-            classDataArray[index] = new ClassData(entry.getValue().toByteArray(), entry.getKey());
-            classDataArray[index].setGlobalClass(true);
             index++;
         }
         classDataArray[index] = new ClassData(originClassWriter.toByteArray(), originClassName);

@@ -91,12 +91,19 @@ public class ContextReader {
             }
         }
 
-
         if (transformInfo != null && transformInfo.externalProxyModel != null) {
             ClassWriter classWriter = transformInfo.externalProxyModel.getGlobalProxyExternalClassWriter();
             if (classWriter != null) {
                 ClassData classData = new ClassData(classWriter.toByteArray(), transformInfo.externalProxyModel.getGlobalProxyClassName());
-                File file = context.getGrobalRelativeFile();
+                File file = null;
+                try {
+                    file = context.getRelativeFile(context.getAllDirs().iterator().next());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                if (file == null || !file.exists()) {
+                    file = context.getGrobalRelativeFile();
+                }
                 File target = Util.toSystemDependentFile(file, classData.getClassName() + ".class");
                 Files.createParentDirs(target);
                 Files.write(classData.getClassBytes(), target);
