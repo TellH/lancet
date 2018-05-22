@@ -71,7 +71,7 @@ public class ProxyMethodVisitor extends MethodVisitor {
                 if(c.globalProxyClass) {
                     synchronized (sLock) {
                         String artificialClassname = externalProxyModel.getGlobalProxyClassName();
-                        ClassVisitor cv = classCollector.getGlobalProxyClassVisitor(artificialClassname, externalProxyModel);
+                        ClassVisitor cv = externalProxyModel.getGlobalProxyExternalClassWriter();
 
                         String methodName = c.sourceClass.replace("/", "_") + "_" + c.sourceMethod.name;
                         if (!externalProxyModel.includedMethod(c)) {

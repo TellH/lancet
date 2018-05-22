@@ -5,6 +5,8 @@ import me.ele.lancet.weaver.internal.exception.ErrorManager;
 import me.ele.lancet.weaver.internal.log.Log;
 import me.ele.lancet.weaver.internal.util.TextUtils;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -24,15 +26,23 @@ public class ExternalProxyModel {
     private final Set methodSet;
 
     public ClassWriter getGlobalProxyExternalClassWriter() {
+        if (globalProxyExternalClassWriter == null) {
+            globalProxyExternalClassWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+            globalProxyExternalClassWriter.visit(Opcodes.V1_7, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, globalProxyClassName, null, "java/lang/Object", null);
+            MethodVisitor mv = globalProxyExternalClassWriter.visitMethod(Opcodes.ACC_PRIVATE, "<init>", "()V", null, null);
+            mv.visitCode();
+            mv.visitVarInsn(Opcodes.ALOAD, 0);
+            mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+            mv.visitInsn(Opcodes.RETURN);
+            mv.visitMaxs(1, 1);
+            mv.visitEnd();
+        }
         return globalProxyExternalClassWriter;
     }
 
     public String getGlobalProxyClassName() {
-        return globalProxyClassName;
-    }
 
-    public void setGlobalProxyExternalClassWriter(ClassWriter globalProxyExternalClassWriter) {
-        this.globalProxyExternalClassWriter = globalProxyExternalClassWriter;
+        return globalProxyClassName;
     }
 
     public ExternalProxyModel(String className) {
