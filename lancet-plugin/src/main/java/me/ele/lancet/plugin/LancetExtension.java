@@ -20,6 +20,7 @@ public class LancetExtension {
     private SpiExtension spiExtension;
     private boolean shouldDebugEnableCheck;
     private GlobalProxyExtension globalProxy;
+    private String[] whiteListFilePath;
 
     public void logLevel(Log.Level level) {
         this.level = Objects.requireNonNull(level, "Log.Level is null");
@@ -134,5 +135,13 @@ public class LancetExtension {
 
     public void setCheckAnnotationNotFoundEnable(boolean checkAnnotationNotFoundEnable) {
         this.checkAnnotationNotFoundEnable = checkAnnotationNotFoundEnable;
+    }
+
+    public String[] getWhiteListFilePath() {
+        return whiteListFilePath;
+    }
+
+    public void setWhiteListFilePath(String[] whiteListFilePath) {
+        this.whiteListFilePath = whiteListFilePath;
     }
 }

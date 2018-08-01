@@ -5,6 +5,7 @@ import com.android.build.gradle.internal.pipeline.TransformManager;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
+
 import me.ele.lancet.plugin.internal.*;
 import me.ele.lancet.plugin.internal.context.ContextReader;
 import me.ele.lancet.plugin.internal.preprocess.PreClassAnalysis;
@@ -26,6 +27,7 @@ import me.ele.lancet.weaver.internal.log.Impl.FileLoggerImpl;
 import me.ele.lancet.weaver.internal.log.Log;
 import me.ele.lancet.weaver.internal.parser.AsmMetaParser;
 import me.ele.lancet.weaver.spi.SpiModel;
+
 import org.gradle.api.Project;
 
 import java.io.File;
@@ -132,7 +134,7 @@ class LancetTransform extends Transform {
         Log.i("now: " + System.currentTimeMillis());
 
         boolean incremental = lancetExtension.getIncremental();
-        PreClassAnalysis preClassAnalysis = new PreClassAnalysis(cache, new ExtraCache(global.getLancetExtraDir()));
+        PreClassAnalysis preClassAnalysis = new PreClassAnalysis(cache, new ExtraCache(global.getRootDir(), lancetExtension.getWhiteListFilePath()));
         fetchSpiServicesFiles(preClassAnalysis); // 业务模块化的接口配置文件
         incremental = preClassAnalysis.execute(incremental, context);
 
@@ -205,8 +207,9 @@ class LancetTransform extends Transform {
                     .filter(entry -> {
                         String[] split = entry.getKey().split(SEPARATOR);
                         String className = split[0];
+                        String methodName = split[1];
                         return !checkIfSuperMethodExisted(context.getGraph(), className, split[1], split[2], entry.getValue(), errorLog)
-                                && CheckReferenceNotExistElementsClassVisitor.shouldCheck(className);
+                                && CheckReferenceNotExistElementsClassVisitor.shouldCheck(className, methodName);
                     })
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             if (!pendingMethods.isEmpty()) {

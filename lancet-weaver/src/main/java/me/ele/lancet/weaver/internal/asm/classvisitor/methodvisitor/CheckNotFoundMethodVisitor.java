@@ -4,17 +4,17 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.MethodVisitor;
 
 import me.ele.lancet.base.Scope;
-import me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor;
 import me.ele.lancet.weaver.internal.graph.ClassEntity;
 import me.ele.lancet.weaver.internal.graph.Graph;
 import me.ele.lancet.weaver.internal.graph.MethodEntity;
 import me.ele.lancet.weaver.internal.graph.Node;
 import me.ele.lancet.weaver.internal.util.TypeUtil;
 
-import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.*;
+import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.AnnotationLocation;
 import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.MethodCallLocation;
 import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.SEPARATOR;
 import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.getMethodCache;
+import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.getNotExistAnnotations;
 import static me.ele.lancet.weaver.internal.asm.classvisitor.CheckReferenceNotExistElementsClassVisitor.shouldCheck;
 
 /**
@@ -35,7 +35,7 @@ public class CheckNotFoundMethodVisitor extends MethodVisitor {
 
     @Override
     public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-        if (shouldCheck(owner)) {
+        if (shouldCheck(owner, name)) {
             if (itf) { // 接口调用，把所有都实现类的调用方法都放入Cache里
                 graph.implementsOf(owner, Scope.ALL).forEach(node -> {
                     ClassEntity clz = node.entity;

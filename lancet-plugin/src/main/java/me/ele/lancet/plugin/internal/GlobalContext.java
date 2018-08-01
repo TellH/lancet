@@ -27,4 +27,8 @@ public class GlobalContext {
     public File getFile(String spiServicePath) {
         return spiServicePath != null ? new File(project.getRootDir(), spiServicePath) : null;
     }
+
+    public File getRootDir() {
+        return project.getRootDir();
+    }
 }
