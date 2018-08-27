@@ -180,7 +180,6 @@ class LancetTransform extends Transform {
             }
         }
         new ContextReader(context, transformInfo).accept(incremental, new TransformProcessor(context, weaver));
-        Set<String> errorLog = new HashSet<>();
         if (!Util.isDebugging && lancetExtension.isCheckUselessProxyMethodEnable()) {
             List<ProxyInfo> proxyInfoList = transformInfo.proxyInfo;
             proxyInfoList.forEach(info -> {
@@ -188,14 +187,14 @@ class LancetTransform extends Transform {
 //                    errorLog.add(String.format("@Proxy: %s target method is not exist!", info.toString()));
 //                }
                 if (!info.isEffective) {
-                    errorLog.add(String.format("@Proxy: %s is useless!", info.toString()));
+                    ErrorManager.getInstance().addErrorLog(String.format("@Proxy: %s is useless!", info.toString()));
                 }
             });
             for (String k : executeInfoBak.keySet()) {
                 List<InsertInfo> insertInfos = executeInfoBak.get(k);
                 insertInfos.forEach(info -> {
                     if (!info.shouldIgoreCheck && !info.isTargetMethodExist) {
-                        errorLog.add(String.format("@Insert: %s target method is not exist!", info.toString()));
+                        ErrorManager.getInstance().addErrorLog(String.format("@Insert: %s target method is not exist!", info.toString()));
                     }
                 });
             }
@@ -208,7 +207,7 @@ class LancetTransform extends Transform {
                         String[] split = entry.getKey().split(SEPARATOR);
                         String className = split[0];
                         String methodName = split[1];
-                        return !checkIfSuperMethodExisted(context.getGraph(), className, split[1], split[2], entry.getValue(), errorLog)
+                        return !checkIfSuperMethodExisted(context.getGraph(), className, split[1], split[2], entry.getValue())
                                 && CheckReferenceNotExistElementsClassVisitor.shouldCheck(className, methodName);
                     })
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -216,13 +215,13 @@ class LancetTransform extends Transform {
                 pendingMethods.forEach((k, v) -> {
                     String[] split = k.split(SEPARATOR);
                     String className = split[0];
-                    errorLog.add(String.format("Class: %s, Method: %s, Desc: %s not found. It was called at Class: %s, Method: %s \n",
+                    ErrorManager.getInstance().addErrorLog(String.format("Class: %s, Method: %s, Desc: %s not found. It was called at Class: %s, Method: %s \n",
                             className, split[1], split[2], v.clzLoc, v.methodLoc));
                 });
             }
             Set<AnnotationLocation> notExistAnnotations = CheckReferenceNotExistElementsClassVisitor.getNotExistAnnotations();
             if (lancetExtension.isCheckAnnotationNotFoundEnable() && !notExistAnnotations.isEmpty()) {
-                notExistAnnotations.forEach(e -> errorLog.add(String.format("Annotation: %s not found. \\@ %s \n", e.annoName, e.toString())));
+                notExistAnnotations.forEach(e -> ErrorManager.getInstance().addErrorLog(String.format("Annotation: %s not found. \\@ %s \n", e.annoName, e.toString())));
             }
         }
 
@@ -233,13 +232,8 @@ class LancetTransform extends Transform {
             }
         }
 
-        Log.e("Not Found Elements: " + errorLog.toString());
-        if (!Util.isDebugging && !errorLog.isEmpty() && lancetExtension.isStrictMode()) {
-            throw new RuntimeException(ErrorManager.getInstance().toErrorString() + "\n" + errorLog.toString());
-        }
-
-        if (ErrorManager.getInstance().isHasError()) {
-            throw new InterruptedException(ErrorManager.getInstance().toErrorString());
+        if (!Util.isDebugging && lancetExtension.isStrictMode()) {
+            throw new RuntimeException(ErrorManager.getInstance().toErrorString());
         }
 
         Log.i("build successfully done");
@@ -273,10 +267,10 @@ class LancetTransform extends Transform {
         }
     }
 
-    private boolean checkIfSuperMethodExisted(Graph graph, String className, String methodName, String desc, MethodCallLocation value, Set<String> errorLog) {
+    private boolean checkIfSuperMethodExisted(Graph graph, String className, String methodName, String desc, MethodCallLocation value) {
         Node node = graph.get(className);
         if (node == null) {
-            errorLog.add(String.format("Class: %s not found, with Method: %s. It was called at Class: %s, Method: %s \n",
+            ErrorManager.getInstance().addErrorLog(String.format("Class: %s not found, with Method: %s. It was called at Class: %s, Method: %s \n",
                     className, methodName, value.clzLoc, value.methodLoc));
             return false;
         }
