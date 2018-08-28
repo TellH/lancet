@@ -39,7 +39,7 @@ public class ErrorManager {
         return errorLog;
     }
 
-    public boolean isHasError() {
+    public boolean hasError() {
         return errorLog.size() > 0;
     }
 

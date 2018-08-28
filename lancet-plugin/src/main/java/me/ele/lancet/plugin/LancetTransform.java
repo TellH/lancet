@@ -232,7 +232,7 @@ class LancetTransform extends Transform {
             }
         }
 
-        if (!Util.isDebugging && lancetExtension.isStrictMode()) {
+        if (!Util.isDebugging && lancetExtension.isStrictMode() && ErrorManager.getInstance().hasError()) {
             throw new RuntimeException(ErrorManager.getInstance().toErrorString());
         }
 
