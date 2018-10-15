@@ -17,7 +17,6 @@ import me.ele.lancet.weaver.internal.graph.Graph;
 import me.ele.lancet.weaver.internal.graph.InterfaceNode;
 import me.ele.lancet.weaver.internal.graph.MetaGraphGenerator;
 import me.ele.lancet.weaver.internal.graph.Node;
-import me.ele.lancet.weaver.internal.util.TypeUtil;
 
 /**
  * Created by gengwanpeng on 17/4/26.
@@ -35,24 +34,21 @@ public class MetaGraphGeneratorImpl implements MetaGraphGenerator {
 
     // thread safe
     public void add(ClassEntity entity, Status status) {
-        boolean isInterface = TypeUtil.isInterface(entity.access);
-        Node current = getOrPutEmpty(isInterface, entity.name);
+        Node current = getOrPutEmpty((entity.access & Opcodes.ACC_INTERFACE) != 0, entity.name);
 
         ClassNode superNode = null;
         List<InterfaceNode> interfaceNodes = Collections.emptyList();
         if (entity.superName != null) {
-            superNode = (ClassNode) getOrPutEmpty(isInterface, entity.superName);
+            superNode = (ClassNode) getOrPutEmpty(false, entity.superName);
+        }
+        if (entity.interfaces.size() > 0) {
+            interfaceNodes = entity.interfaces.stream().map(i -> (InterfaceNode) getOrPutEmpty(true, i)).collect(Collectors.toList());
         }
 
         current.entity = entity;
         current.parent = superNode;
         current.status = status;
-        if (!isInterface) {
-            if (entity.interfaces.size() > 0) {
-                interfaceNodes = entity.interfaces.stream().map(i -> (InterfaceNode) getOrPutEmpty(true, i)).collect(Collectors.toList());
-            }
-            ((ClassNode) current).interfaces = interfaceNodes;
-        }
+        current.interfaces = interfaceNodes;
     }
 
     public void remove(String className) {

@@ -10,12 +10,13 @@ import java.util.stream.Stream;
 /**
  * Created by gengwanpeng on 17/5/3.
  */
-public class InterfaceNode extends Node<InterfaceNode> {
+public class InterfaceNode extends Node {
 
+    public List<InterfaceNode> children = Collections.emptyList();
     public List<ClassNode> implementedClasses = Collections.emptyList();
 
     public InterfaceNode(String className) {
-        super(new ClassEntity(className), null);
+        super(new ClassEntity(className), null, Collections.emptyList());
     }
 
     @Override
