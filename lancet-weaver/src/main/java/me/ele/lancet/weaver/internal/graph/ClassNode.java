@@ -9,12 +9,12 @@ import java.util.List;
 /**
  * Created by gengwanpeng on 17/5/3.
  */
-public class ClassNode extends Node {
+public class ClassNode extends Node<ClassNode> {
 
-    public List<ClassNode> children = Collections.emptyList();
+    public List<InterfaceNode> interfaces = Collections.emptyList();
 
     public ClassNode(String className) {
-        super(new ClassEntity(className), null, Collections.emptyList());
+        super(new ClassEntity(className), null);
     }
 
     @Override

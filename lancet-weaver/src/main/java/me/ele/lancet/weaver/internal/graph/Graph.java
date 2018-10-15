@@ -32,13 +32,12 @@ public class Graph {
      * Before prepare, the Graph only has vector from child to super.
      * this method will add vector from super to child.
      * After prepare, there is a full graph.
-     *
      */
     public void prepare() {
         nodeMap.values()
                 .forEach(n -> {
                     if (n.parent != null) {
-                        me.ele.lancet.weaver.internal.graph.ClassNode parent = n.parent;
+                        Node parent = n.parent;
                         if (parent.children == Collections.EMPTY_LIST) {
 
                             // optimize for Object
@@ -48,26 +47,18 @@ public class Graph {
                                 parent.children = new ArrayList<>();
                             }
                         }
-                        // all interfaces extends java.lang.Object
-                        // make java.lang.Object subclasses purely
-                        if (n instanceof ClassNode) {
-                            parent.children.add((ClassNode) n);
-                        }
+                        parent.children.add(n);
                     }
-                    n.interfaces.forEach(i -> {
-                        if (n instanceof InterfaceNode) {
-                            if (i.children == Collections.EMPTY_LIST) {
-                                i.children = new ArrayList<>();
-                            }
-                            i.children.add((InterfaceNode) n);
-                        } else {
+                    if (n instanceof ClassNode) {
+                        ClassNode cn = (ClassNode) n;
+                        cn.interfaces.forEach(i -> {
                             if (i.implementedClasses == Collections.EMPTY_LIST) {
                                 i.implementedClasses = new ArrayList<>();
                             }
                             //noinspection ConstantConditions
-                            i.implementedClasses.add((me.ele.lancet.weaver.internal.graph.ClassNode) n);
-                        }
-                    });
+                            i.implementedClasses.add(cn);
+                        });
+                    }
                 });
     }
 

@@ -9,28 +9,27 @@ import java.util.List;
 /**
  * Created by gengwanpeng on 17/5/2.
  */
-public abstract class Node {
+public abstract class Node<T extends Node> {
 
     // for flow check
     public boolean[] checkPass = new boolean[2];
     public Status status;
 
 
-    public Node(ClassEntity entity, ClassNode parent, List<InterfaceNode> interfaces) {
+    public Node(ClassEntity entity, T parent) {
         this.entity = entity;
         this.parent = parent;
-        this.interfaces = interfaces;
     }
 
     public abstract CheckFlow.FlowNode toFlowNode(Scope scope);
 
-    public ClassNode parent; // null means it doesn't exists actually, it's a virtual class node
-    public List<InterfaceNode> interfaces;
+    public T parent; // null means it doesn't exists actually, it's a virtual class node
+    public List<T> children = Collections.emptyList();
 
     public ClassEntity entity;
 
     public static Node newPlaceHolder(String className) {
-        return new Node(new ClassEntity(className), null, Collections.emptyList()) {
+        return new Node(new ClassEntity(className), null) {
             @Override
             public CheckFlow.FlowNode toFlowNode(Scope scope) {
                 return null;
