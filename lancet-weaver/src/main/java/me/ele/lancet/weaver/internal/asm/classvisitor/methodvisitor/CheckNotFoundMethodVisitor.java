@@ -83,7 +83,7 @@ public class CheckNotFoundMethodVisitor extends MethodVisitor {
         Node parent = node.parent;
         while (parent != null) {
             for (MethodEntity m : parent.entity.methods) {
-                if (methodName.equals(m.name) && desc.equals(m.desc)) {
+                if (method.equals(m.name) && desc.equals(m.desc)) {
                     // 找到这个方法
                     return TypeUtil.isAbstract(m.access);
                 }

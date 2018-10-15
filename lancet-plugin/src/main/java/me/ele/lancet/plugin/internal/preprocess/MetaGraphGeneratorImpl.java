@@ -39,10 +39,24 @@ public class MetaGraphGeneratorImpl implements MetaGraphGenerator {
         ClassNode superNode = null;
         List<InterfaceNode> interfaceNodes = Collections.emptyList();
         if (entity.superName != null) {
-            superNode = (ClassNode) getOrPutEmpty(false, entity.superName);
+            Node node = getOrPutEmpty(false, entity.superName);
+            if (node instanceof ClassNode) {
+                superNode = (ClassNode) node;
+            } else {
+                throw new RuntimeException(String.format("%s is not a class. Maybe there are duplicate class files in the project.", entity.superName));
+            }
         }
         if (entity.interfaces.size() > 0) {
-            interfaceNodes = entity.interfaces.stream().map(i -> (InterfaceNode) getOrPutEmpty(true, i)).collect(Collectors.toList());
+            interfaceNodes = entity.interfaces.stream()
+                    .map(i -> {
+                        Node node = getOrPutEmpty(true, i);
+                        if (node instanceof InterfaceNode) {
+                            return (InterfaceNode) node;
+                        } else {
+                            throw new RuntimeException(String.format("%s is not a interface. Maybe there are duplicate class files in the project.", i));
+                        }
+                    })
+                    .collect(Collectors.toList());
         }
 
         current.entity = entity;
