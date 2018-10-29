@@ -63,7 +63,7 @@ public class ContextReader {
                 ImmutableList.<JarInput>builder()
                         .addAll(context.getAddedJars())
                         .addAll(context.getRemovedJars())
-                        .addAll(changedToDeleteAndAdd())
+                        .addAll(context.getChangedJars())
                         .build();
         // accept the jar in thread pool
         List<Future<Void>> tasks = Stream.concat(jars.stream(), context.getAllDirs().stream())
